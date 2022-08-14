@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% set active_page = 'investigator' %}
+
+{% block title %}
+Select investigator
+{% endblock %}
+
+{% block header %}
+
+{% endblock %}
+
+{% block content %}
+<div class="container-xl bg-white mx-auto mt-5 p-3">
+    <div class="row m-2">
+        <h3>Investigator selection</h3>
+        <p>Select an investigator to see cards commonly used with him and average deck stats</p>
+
+
+        <table class="table table-hover" id="investigators-table">
+            <thead>
+            <tr><th>Investigator</th><th>Faction</th><th># of decks</th><th></th></tr></thead>
+            {% for investigator_code, investigator in investigators.items() %}
+            <tr>   
+                <td>
+                {% if investigator['faction_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+                <span class="icon icon-{{investigator['faction_code']}}" title="{{investigator['faction_code']}}"></span>
+                {% endif %}
+                {% if investigator['faction2_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+                <span class="icon icon-{{investigator['faction2_code']}}" title="{{investigator['faction2_code']}}"></span>
+                {% endif %}
+                {% if investigator['faction3_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+                <span class="icon icon-{{investigator['faction3_code']}}" title="{{investigator['faction3_code']}}"></span>
+                {% endif %}
+            
+                <a href="{{url_for('investigator.view', investigator_id=investigator_code)}}" class="{{ investigator['color'] }}">{{ investigator['name'] }}</td></a>
+            
+                <td>{{ investigator['faction_code']|capitalize }}</td>
+                <td>{{ '%d'|format(investigator['number_of_decks']) }}</td>
+                <td><a href="http://arkhamdb.com/card/{{investigator_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
+                
+            </tr>
+            {% endfor %}
+        </table>
+        <script>
+        $('#investigators-table').DataTable({
+            responsive: true,
+            autoWidth: false,
+            iDisplayLength: 100, 
+            order: [[2, 'desc']],
+            columnDefs: [{
+            targets: 0, render: function(data, type, row, meta) {
+                
+                if (type != 'display') {
+                return data.replace( /<.*?>/g, '' );
+                }
+                return data;
+            }
+            },
+            {
+                "targets":3, "orderable":false, "width":"10%"
+            }]
+        });
+        </script>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% set active_page = 'index' %}
+
+
+{% block title %}
+ArkhRec
+{% endblock %}
+
+{% block header %}
+
+{% endblock %}
+
+{% block content %}
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+          <h1 class="display-3">ArkhRec</h1>
+          <p>ArkhRec is a card & deck "recommender" for Arkham Horror LCG. </p>
+        </div>
+    </div>
+
+    <div class="container" style="background-color:white">
+        <p style="font-size:x-large; font-weight: 200;">You can start exploring the decks created and shared by the community on ArkhamDB in three ways:</p>
+        <!-- Example row of columns -->
+        <div class="row">
+          <div class="col-md-4">
+            <h2>By card</h2>
+            <ul>
+                <li>Check the card's popularity on ArkhamDB</li>
+                <li>See cards that go together with it</li>
+                <li>Explore which investigators use it the most</li>
+            </ul>
+            <p><a class="btn btn-secondary" href="{{url_for('card.search')}}" role="button">Search cards &raquo;</a></p>
+          </div>
+          <div class="col-md-4">
+            <h2>By investigator</h2>
+            <ul>
+                <li>Check the investigator's popularity on ArkhamDB</li>
+                <li>See what cards go together with it</li>
+                <li>Evaluate average deck statistics (costs, slots, ...)</li>
+            </ul>
+            <p><a class="btn btn-secondary" href="{{url_for('investigator.search')}}" role="button">Search investigators &raquo;</a></p>
+          </div>
+          <div class="col-md-4">
+            <h2>By deck</h2>
+            <ul>
+                <li>See common and uncommon cards for the deck</li>
+                <li>Get inspiration for synergistic cards</li>
+                <li>Evaluate average deck statistics (costs, slots, ...)</li>
+            </ul>
+            <p><a class="btn btn-secondary" href="{{url_for('deck.search')}}" role="button">Search decks &raquo;</a></p>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="row">
+            <h2>FAQ</h2>
+            <div class="mx-2">
+                <ul>
+                    <li><b>Q: Does this tool recomend the *best* cards for each deck?</b></li>
+                    <p><b>NO!</b> Just cards that appear frequently together in public ArkhamDB decklists. This does not mean these are the "best" cards for the deck. </p>
+                    <li><b>Q: If this does not recommend the *best* cards, isn't this useless?</b></li>
+                    <p><b>NO!</b> Well, maybe, but there are at least three main use cases for this tool:</p>
+                    <ol>
+                        <b><li>Get inspiration</li></b>
+                        <p>Sometimes you are just wondering "are there any Bob Jenkins decks that do not use Scavenging? Could I build one?".</p>
+                        <b><li>Get "deck fillers"</li></b>
+                        <p>You've selected 25 awesome cards for your next Forgotten Age run - what are the other 5 cards you could include in the deck? Also, do you have a good asset/event/skill distribution (this site makes the calculation automatically for you, thank me later)</p>
+                        <b><li>Get a quick ready-to-go serviceable deck for beginners</li></b>
+                        <p>ArkhamDB is awesome, but it can be daunting for new players. The sheer amount of decks per investigator makes it diffcult for a begginner to choose one. Here, they will get an "average" deck for every investigator they'd like to play with. Granted, it won't have any explanations about how to use them and it would be, well, "average".</p>
+                    </ol>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <h2>About and inspiration</h2>
+            <p>This site relies heavily on <a href="">EDHREC</a> and <a href="">ArkhamDB</a></p>
+        </div>
+      </div> <!-- /container -->
+</div>
+
+{% endblock %}

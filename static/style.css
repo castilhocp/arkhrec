@@ -1,0 +1,77 @@
+.mystic {
+    color: #4331b9;
+}
+
+.seeker {
+    color: #ec8426;
+}
+
+.guardian {
+    color: #2b80c5;
+}
+
+.rogue {
+    color: #107116;
+}
+
+.survivor {
+    color: #cc3038;
+}
+
+.neutral {
+    color: #606060;
+}
+
+.mythos {
+    color: #383030;
+}
+
+.multi {
+    color: #c0c000;
+}
+
+.icon {
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-guardian, .icon-mystic, .icon-seeker, .icon-rogue, .icon-survivor {
+	background-image : url('images/factions/guardian.png');
+	background-repeat : no-repeat;
+	width : 16px;
+	height : 16px;
+	display : inline-block;
+	vertical-align : top;
+	margin-top: 1px;
+}
+.icon-mystic {
+	background-image : url('images/factions/mystic.png');
+}
+.icon-seeker {
+	background-image : url('images/factions/seeker.png');
+}
+.icon-rogue {
+	background-image : url('images/factions/rogue.png');
+}
+.icon-survivor {
+	background-image : url('images/factions/survivor.png');
+	margin-top: -1px;
+}
+
+div.dataTables_filter label , div.dataTables_length label{
+    padding: 0px !important;
+  }
+
+body {
+    background-color: #F5F6F5
+}
+
+h1 {
+    font-weight: 200;
+}

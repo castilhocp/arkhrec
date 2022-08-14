@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% set active_page = 'deck' %}
+{% from 'macros.html' import generate_deck_table %}
+{% from 'macros.html' import generate_inv_rec_table %}
+{% from 'macros.html' import generate_rec_table %}
+
+{% block title %}
+Search deck
+{% endblock %}
+
+{% block header %}
+
+{% endblock %}
+
+{% block content %}
+<div class="container-sm bg-white mx-auto p-4" style="max-width: 500px">
+    <h3>Search ArkhamDB's decks</h3>
+    <p>Insert a deck id from ArkhamDB to understand its similarities to other publicly shared decklists</p>
+
+    <div class="card col-sm">
+        <form method="post">
+            <div class="col-sm-7 m-3">
+                <label for="deck_id" class="form-label">ArkhamDB's deck id</label>
+                <input type="number" class="form-control" name="deck_id" id="deck_id">
+            </div>
+            <div class="col-sm m-3">
+                <button type="submit" class="btn btn-primary">Analyse deck</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

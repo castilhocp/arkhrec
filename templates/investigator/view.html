@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% set active_page = 'investigator' %}
+{% from 'macros.html' import generate_card_inv_table %}
+
+{% block title %}
+{{ investigator_info[investigator_id]['name'] }}
+{% endblock %}
+
+{% block header %}
+
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-2">
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="subheader">Investigator summary</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-3">
+                    <img src="https://arkhamdb.com/bundles/cards/{{investigator_id}}.png" style="max-width:400px"></img>
+                </div>
+                <div class="col-3">
+                    <ul><b>Name:</b> {{investigator_info[investigator_id]['name']}}</ul>
+                    <ul><b>Faction:</b> {{investigator_info[investigator_id]['faction_code']|capitalize}}</ul>
+                    <ul><b>Text:</b> {{investigator_info[investigator_id]['text']}}</ul>
+                    <ul><b>Occurrence:</b> {{ 'Present in %d out of %d decks analysed (%d%%)'|format(investigator_info[investigator_id]['number_of_decks'], num_of_decks, (100*investigator_info[investigator_id]['number_of_decks'] / num_of_decks)) }}</ul>
+                    <ul><b>Popularity:</b>  {{ 'Ranked %d out of %d investigators analysed (percentile %d%%)'|format((investigator_info[investigator_id]['occurrences_rank']),num_of_investigators,100-100*(investigator_info[investigator_id]['occurrences_rank'])/num_of_investigators) }} </ul> 
+                </div>
+                <div class="col-6">
+                    <div class="row">
+                        <h3>Average deck</h3>
+                    </div>
+                    <div class="row">
+                        {% for column in average_deck | slice(2) %}
+                        <div class="col">
+                            <ul>
+                                    {%- for card in column %}
+                                    <li>
+                                        {{'%d'|format(average_deck[card]['deck_limit'])}}x 
+                                        {% if average_deck[card]['faction_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+                                          <span class="icon icon-{{average_deck[card]['faction_code']}}" title="{{average_deck[card]['faction_code']}}"></span>
+                                        {% endif %}
+                                        <a href="{{url_for('card.view',card_id= card)}}" class="{{ average_deck[card]['faction_code'] }}">{{average_deck[card]['name']}}</a>  
+                                    </li>
+                                    {% endfor %}
+                            </ul>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <div class="row p-4">
+        <div class="col-6 align-items-stretch">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="subheader">Popular cards</h3>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                    {{ generate_card_inv_table(card_info) }}
+              </div>
+            </div>
+          </div>        
+        </div>
+    
+        <div class="col-6 align-items-stretch">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="subheader">Deck statistics vs average</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col">
+                      <figure class="highcharts-figure">  
+                        <div id="chart.types"></div>
+                      </figure>
+                    </div>
+                    <div class="col">
+                      <figure class="highcharts-figure">  
+                        <div id="chart.slots"></div>
+                      </figure>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                      <figure class="highcharts-figure">  
+                        <div id="chart.pips"></div>
+                      </figure>
+                    </div>
+                    <div class="col">
+                      <figure class="highcharts-figure">  
+                        <div id="chart.cost"></div>
+                      </figure>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+</div>
+
+
+<script>
+    Highcharts.chart('chart.types', {
+      chart: {
+          type: 'column'
+      },
+      title: {
+          text: 'Card types distribution'
+      },
+      subtitle: {
+          text: 'Percentage of assets, events and skills'
+      },
+      xAxis: {
+          categories: [
+              'Assets',
+              'Events',
+              'Skills',
+          ],
+          crosshair: true
+      },
+      yAxis: {
+          min: 0,
+          title: {
+              text: '% of deck'
+          }
+      },
+      tooltip: {
+          headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+          pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+              '<td style="padding:0"><b>{point.y:.1f} %</b></td></tr>',
+          footerFormat: '</table>',
+          shared: true,
+          useHTML: true
+      },
+      plotOptions: {
+          column: {
+              pointPadding: 0.2,
+              borderWidth: 0
+          },
+      },
+      series: [{
+          name: '{{investigator_info[investigator_id]['name']}}',
+          data: [{{ deck_statistics['inv_assets_percentage'] }}, {{ deck_statistics['inv_events_percentage'] }}, {{ deck_statistics['inv_skills_percentage'] }}]
+
+      },
+      {
+          name: 'Other {{investigator_info[investigator_id]['faction_code']|capitalize}}s',
+          data: [{{ deck_statistics['faction_assets_percentage'] }}, {{ deck_statistics['faction_events_percentage'] }}, {{ deck_statistics['faction_skills_percentage'] }}],
+          color: getComputedStyle(document.querySelector('.{{investigator_info[investigator_id]['faction_code']}}')).color
+      },
+      {
+          name: 'Other investigators',
+          data: [{{ deck_statistics['others_assets_percentage'] }}, {{ deck_statistics['others_events_percentage'] }}, {{ deck_statistics['others_skills_percentage'] }}]
+      }]
+  });
+
+  Highcharts.chart('chart.slots', {
+      chart: {
+          type: 'column'
+      },
+      title: {
+          text: 'Asset slots usage'
+      },
+      subtitle: {
+          text: 'Total number of slots used'
+      },
+      xAxis: {
+          categories: [
+              'Hand',
+              'Arcane',
+              'Body',
+              'Accessory',
+              'Ally'
+          ],
+          crosshair: true
+      },
+      yAxis: {
+          min: 0,
+          title: {
+              text: '# of slots'
+          }
+      },
+      tooltip: {
+          headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+          pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+              '<td style="padding:0"><b>{point.y:.1f} slots</b></td></tr>',
+          footerFormat: '</table>',
+          shared: true,
+          useHTML: true
+      },
+      plotOptions: {
+          column: {
+              pointPadding: 0.2,
+              borderWidth: 0
+          }
+      },
+      series: [{
+          name: '{{investigator_info[investigator_id]['name']}}',
+          data: [{{ deck_statistics['inv_hand_slot'] }}, {{ deck_statistics['inv_arcane_slot'] }}, {{ deck_statistics['inv_body_slot'] }}, {{ deck_statistics['inv_accessory_slot'] }}, {{ deck_statistics['inv_ally_slot'] }}]
+
+      }, 
+      {
+          name: 'Other {{investigator_info[investigator_id]['faction_code']|capitalize}}s',
+          data: [{{ deck_statistics['faction_hand_slot'] }}, {{ deck_statistics['faction_arcane_slot'] }}, {{ deck_statistics['faction_body_slot'] }}, {{ deck_statistics['faction_accessory_slot'] }}, {{ deck_statistics['faction_ally_slot'] }}],
+          color: getComputedStyle(document.querySelector('.{{investigator_info[investigator_id]['faction_code']}}')).color
+      },
+      {
+          name: 'Other investigators',
+          data: [{{ deck_statistics['others_hand_slot'] }}, {{ deck_statistics['others_arcane_slot'] }}, {{ deck_statistics['others_body_slot'] }}, {{ deck_statistics['others_accessory_slot'] }}, {{ deck_statistics['others_ally_slot'] }}]
+
+      }]
+  });
+
+  Highcharts.chart('chart.cost', {
+      chart: {
+          type: 'column'
+      },
+      title: {
+          text: 'Average cost'
+      },
+      subtitle: {
+          text: 'Average cost per asset and event'
+      },
+      xAxis: {
+          categories: [
+              'Cost'
+          ],
+          crosshair: true
+      },
+      yAxis: {
+          min: 0,
+          title: {
+              text: 'Resources'
+          }
+      },
+      tooltip: {
+          headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+          pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+              '<td style="padding:0"><b>{point.y:.1f} resources </b></td></tr>',
+          footerFormat: '</table>',
+          shared: true,
+          useHTML: true
+      },
+      plotOptions: {
+          column: {
+              pointPadding: 0.2,
+              borderWidth: 0
+          }
+      },
+      series: [{
+          name: '{{investigator_info[investigator_id]['name']}}',
+          data: [{{ deck_statistics['inv_mean_cost'] }}]
+
+      }, 
+      {
+          name: 'Other {{investigator_info[investigator_id]['faction_code']|capitalize}}s',
+          data: [{{ deck_statistics['faction_mean_cost'] }}],
+          color: getComputedStyle(document.querySelector('.{{investigator_info[investigator_id]['faction_code']}}')).color
+      }, {
+          name: 'Other investigators',
+          data: [{{ deck_statistics['others_mean_cost'] }}]
+
+      }]
+  });
+
+  Highcharts.chart('chart.pips', {
+      chart: {
+          type: 'column'
+      },
+      title: {
+          text: 'Total pips'
+      },
+      subtitle: {
+          text: 'Total sum of card pips'
+      },
+      xAxis: {
+          categories: [
+              'Willpower',
+              'Intellect',
+              'Combat',
+              'Agility',
+              'Wild'
+          ],
+          crosshair: true
+      },
+      yAxis: {
+          min: 0,
+          title: {
+              text: '# of pips'
+          }
+      },
+      tooltip: {
+          headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+          pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+              '<td style="padding:0"><b>{point.y:.1f} pips</b></td></tr>',
+          footerFormat: '</table>',
+          shared: true,
+          useHTML: true
+      },
+      plotOptions: {
+          column: {
+              pointPadding: 0.2,
+              borderWidth: 0
+          }
+      },
+      series: [{
+          name: '{{investigator_info[investigator_id]['name']}}',
+          data: [{{ deck_statistics['inv_skill_willpower'] }}, {{ deck_statistics['inv_skill_intellect'] }}, {{ deck_statistics['inv_skill_combat'] }}, {{ deck_statistics['inv_skill_agility'] }}, {{ deck_statistics['inv_skill_wild'] }}]
+
+      }, 
+      {
+          name: 'Other {{investigator_info[investigator_id]['faction_code']|capitalize}}s',
+          data: [{{ deck_statistics['faction_skill_willpower'] }}, {{ deck_statistics['faction_skill_intellect'] }}, {{ deck_statistics['faction_skill_combat'] }}, {{ deck_statistics['faction_skill_agility'] }}, {{ deck_statistics['faction_skill_wild'] }}],
+          color: getComputedStyle(document.querySelector('.{{investigator_info[investigator_id]['faction_code']}}')).color
+      }, 
+      {
+          name: 'Other investigators',
+          data: [{{ deck_statistics['others_skill_willpower'] }}, {{ deck_statistics['others_skill_intellect'] }}, {{ deck_statistics['others_skill_combat'] }}, {{ deck_statistics['others_skill_agility'] }}, {{ deck_statistics['others_skill_wild'] }}]
+
+      }]
+  });
+  </script>
+
+{% endblock %}

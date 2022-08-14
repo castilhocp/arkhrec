@@ -1,0 +1,239 @@
+{% macro generate_deck_table(deck) -%}
+<table class="table table-hover" id="decklist-table">
+  <thead>
+  <tr><th></th><th>Card</th><th>Type</th><th>Slot</th><th>Similarity <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="How much a card is similar to all other cards in deck. More similar cards have higher scores."></i></th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
+{% for card_code, card in deck.items() %}
+<tr>   
+  <td>{{ card['count'] }}x</td>   
+    <td>
+      {% if card['faction_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction_code']}}" title="{{card['faction_code']}}"></span>
+      {% endif %}
+      {% if card['faction2_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction2_code']}}" title="{{card['faction2_code']}}"></span>
+      {% endif %}
+      {% if card['faction3_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
+      {% endif %}
+  
+      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp'] + ')' if card['xp']!='' else ''}}</td></a>
+    
+    <td>{{ card['type_code'] }}</td>
+    <td>{{ card['slot'] }}</td>
+    <td>{{ card['Jaccard Score'] }}</td>
+    <td>{{ card['Coocurrence'] }}</td>
+    <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
+  </tr>
+  {% endfor %}
+  </table>
+  <script>
+    $('#decklist-table').DataTable({
+      responsive: true,
+      paging: false,
+      autoWidth: false,
+      order: [[4, 'desc']],
+      columnDefs: [{
+        targets: 0, render: function(data, type, row, meta) {
+          
+          if (type != 'display') {
+            return data.replace( /<.*?>/g, '' );
+          }
+          return data;
+        }
+      },{
+        "targets": 5, "width":"7%", "orderable":false
+      }
+    ]
+    });
+    </script>
+{%- endmacro %}
+
+{% macro generate_rec_table(deck) -%}
+<table class="table table-hover" id="rec-table">
+  <thead>
+  <tr><th>Card</th><th>Type</th><th>Slot</th><th>Similarity <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="How much a card is similar to all other cards in deck. More similar cards have higher scores."></i></th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
+{% for card_code, card in deck.items() %}
+<tr>   
+      <td>
+      {% if card['faction_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction_code']}}" title="{{card['faction_code']}}"></span>
+      {% endif %}
+      {% if card['faction2_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction2_code']}}" title="{{card['faction2_code']}}"></span>
+      {% endif %}
+      {% if card['faction3_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
+      {% endif %}
+  
+      <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp'] + ')' if card['xp']!='' else ''}}</td></a>
+    
+    <td>{{ card['type_code'] }}</td>
+    <td>{{ card['slot'] }}</td>
+    <td>{{ card['Jaccard Score'] }}</td>
+    <td>{{ card['Coocurrence'] }}</td>
+    <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
+  </tr>
+  {% endfor %}
+  </table>
+  <script>
+    $('#rec-table').DataTable({
+      responsive: true,
+      autoWidth: false,
+      iDisplayLength: 25, 
+      order: [[3, 'desc']],
+      columnDefs: [{
+        targets: 0, render: function(data, type, row, meta) {
+          
+          if (type != 'display') {
+            return data.replace( /<.*?>/g, '' );
+          }
+          return data;
+        }
+      },
+    {
+      "targets": 5, "width":"7%", "orderable":false
+    }]
+    });
+    </script>
+{%- endmacro %}
+
+
+{% macro generate_card_table(cards) -%}
+<table class="table table-hover" id="card-similarity-table">
+  <thead>
+  <tr><th>Card</th><th>Type</th><th>Slot</th><th>Occurrence</th><th>Cooccurrence</th><th>Cooccurence ratio <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks that carry both cards, from all the decks that carry any of these cards. 100% means they always appear together in a deck. 0% that they never appear together in a deck."></i></th><th></th></tr></thead>
+{% for card_code, card in cards.items() %}
+<tr>   
+      <td>
+      {% if card['faction_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction_code']}}" title="{{card['faction_code']}}"></span>
+      {% endif %}
+      {% if card['faction2_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction2_code']}}" title="{{card['faction2_code']}}"></span>
+      {% endif %}
+      {% if card['faction3_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
+      {% endif %}
+  
+      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp'] + ')' if card['xp']!='' else ''}}</td></a>
+    
+    <td>{{ card['type_code'] }}</td>
+    <td>{{ card['slot'] }}</td>
+    <td>{{ '%d'|format(card['Occurrences']) }}</td>
+    <td>{{ '%d'|format(card['Cooccurrences']) }}</td>
+    <td>{{ card['Jaccard Score'] }}</td>
+    <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
+  </tr>
+  {% endfor %}
+  </table>
+  <script>
+    $('#card-similarity-table').DataTable({
+      responsive: true,
+      autoWidth: false,
+      iDisplayLength: 25, 
+      order: [[5, 'desc']],
+      columnDefs: [{
+        targets: 0, render: function(data, type, row, meta) {
+          
+          if (type != 'display') {
+            return data.replace( /<.*?>/g, '' );
+          }
+          return data;
+        }
+      },{
+        "target":6, "width":"7%", "orderable":false
+      }]
+    });
+    </script>
+{%- endmacro %}
+
+{% macro generate_inv_card_table(investigators) -%}
+<table class="table table-hover" id="inv-card-cooc-table">
+  <thead>
+  <tr><th>Investigator</th><th>Faction</th><th>Number of decks</th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
+{% for card_code, investigator in investigators.items() %}
+<tr>   
+      <td>
+      {% if investigator['faction_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{investigator['faction_code']}}" title="{{investigator['faction_code']}}"></span>
+      {% endif %}
+  
+      <a href="{{url_for('investigator.view',investigator_id= investigator['code_str'])}}" class="{{ investigator['faction_code'] }}">{{ card_code }}</td></a>
+    
+    <td>{{ investigator['faction_code'] }}</td>
+    <td>{{ investigator['number_of_decks'] }}</td>
+    <td>{{ investigator['Coocurrence'] }}</td>
+    <td><a href="https://arkhamdb.com/card/{{ investigator['code_str'] }}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
+  </tr>
+  {% endfor %}
+  </table>
+  <script>
+    $('#inv-card-cooc-table').DataTable({
+      responsive: true,
+      autoWidth: false,
+      iDisplayLength: 25, 
+      order: [[3, 'desc']],
+      columnDefs: [{
+        targets: 0, render: function(data, type, row, meta) {
+          
+          if (type != 'display') {
+            return data.replace( /<.*?>/g, '' );
+          }
+          return data;
+        }
+      },{
+        "target": 4, "width": "7%", "orderable":false
+      }]
+    });
+    </script>
+{%- endmacro %}
+
+{% macro generate_card_inv_table(cards) -%}
+<table class="table table-hover" id="card-investigator-table">
+  <thead>
+  <tr><th>Card</th><th>Type</th><th>Slot</th><th>Presence</th><th>Occurrence</th><th>Synergy <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Presence - occurrence. Positive synergy means the card appears more often in the investigator than in general."></i></th><th></th></tr></thead>
+{% for card_code, card in cards.items() %}
+<tr>   
+      <td>
+      {% if card['faction_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction_code']}}" title="{{card['faction_code']}}"></span>
+      {% endif %}
+      {% if card['faction2_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction2_code']}}" title="{{card['faction2_code']}}"></span>
+      {% endif %}
+      {% if card['faction3_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+      <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
+      {% endif %}
+  
+      <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp'] + ')' if card['xp']!='' else ''}}</td></a>
+    
+    <td>{{ card['type_code']|capitalize }}</td>
+    <td>{{ card['slot'] }}</td>
+    <td>{{ '%d%%'|format(100*card['inv_occurrence']) }}</td>
+    <td>{{ '%d%%'|format(100*card['overall_occurrence_ratio']) }}</td>
+    <td>{{ '%d%%'|format(100*card['synergy']) }}</td>
+    <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
+  </tr>
+  {% endfor %}
+  </table>
+  <script>
+    $('#card-investigator-table').DataTable({
+      responsive: true,
+      autoWidth: false,
+      iDisplayLength: 25, 
+      order: [[5, 'desc']],
+      columnDefs: [{
+        targets: 0, render: function(data, type, row, meta) {
+          
+          if (type != 'display') {
+            return data.replace( /<.*?>/g, '' );
+          }
+          return data;
+        }
+      },{
+        "target":6, "width":"7%", "orderable":false
+      }]
+    });
+    </script>
+{%- endmacro %}
+

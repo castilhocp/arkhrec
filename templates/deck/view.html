@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% set active_page = 'deck' %}
+{% from 'macros.html' import generate_deck_table %}
+{% from 'macros.html' import generate_inv_rec_table %}
+{% from 'macros.html' import generate_rec_table %}
+
+{% block title %}
+{{deck_info['investigator_name']}}
+{% endblock %}
+
+{% block header %}
+
+{% endblock %}
+
+{% block content %}
+  <div class="container-fluid mt-2">
+    
+   <div class="card">
+      <div class="card-header">
+        <h3 class="subheader">Deck summary</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-4">
+            <img src="https://arkhamdb.com/bundles/cards/{{deck_info['investigator_code']}}.png" style="max-width: 400px"></img>
+          </div>
+          <div class="col-8">
+            <ul><b>Investigator:</b> {{deck_info['investigator_name']}}</ul>
+            <ul><b>Deck name:</b> {{deck_info['name']}}</ul>
+            <ul><b>Created at:</b> {{deck_info['date_creation']}}</ul>
+            <ul><b>Updated at:</b> {{deck_info['date_update']}}</ul>
+            <ul><b>Number of cards:</b> {{deck_info['total_cards']}}</ul>
+            <ul><b>XP:</b> {{deck_info['xp']}}</ul>
+            <ul><b>Investigator's decks in database:</b> {{deck_info['inv_deck_count']}}</ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    
+
+    <div class="row p-4">
+      <div class="col-6 align-items-stretch">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="subheader">Decklist</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+                  {{ generate_deck_table(deck) }}
+            </div>
+          </div>
+        </div>        
+      </div>
+  
+      <div class="col-6 align-items-stretch">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="subheader">Cards not in deck</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              {{ generate_rec_table(inclusion_recs) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+    </div>
+  
+  
+    <div class="row p-5">
+      <div class="card" style="padding:0">
+        <div class="card-header">
+          <h2 class="subheader">Deck stats</h2>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <figure class="highcharts-figure">  
+                <div id="chart.types"></div>
+              </figure>
+            </div>
+            <div class="col">
+              <figure class="highcharts-figure">  
+                <div id="chart.slots"></div>
+              </figure>
+            </div>
+            <div class="col">
+              <figure class="highcharts-figure">  
+                <div id="chart.pips"></div>
+              </figure>
+            </div>
+            <div class="col">
+              <figure class="highcharts-figure">  
+                <div id="chart.cost"></div>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    Highcharts.chart('chart.types', {
+      chart: {
+          type: 'column'
+      },
+      title: {
+          text: 'Card types distribution'
+      },
+      subtitle: {
+          text: 'Percentage of assets, events and skills'
+      },
+      xAxis: {
+          categories: [
+              'Assets',
+              'Events',
+              'Skills',
+          ],
+          crosshair: true
+      },
+      yAxis: {
+          min: 0,
+          title: {
+              text: '% of deck'
+          }
+      },
+      tooltip: {
+          headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+          pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+              '<td style="padding:0"><b>{point.y:.1f} %</b></td></tr>',
+          footerFormat: '</table>',
+          shared: true,
+          useHTML: true
+      },
+      plotOptions: {
+          column: {
+              pointPadding: 0.2,
+              borderWidth: 0
+          }
+      },
+      series: [{
+          name: 'Deck',
+          data: [{{ deck_statistics['assets_percentage'] }}, {{ deck_statistics['events_percentage'] }}, {{ deck_statistics['skills_percentage'] }}]
+
+      }, {
+          name: 'Investigator Average',
+          data: [{{ deck_statistics['inv_assets_percentage'] }}, {{ deck_statistics['inv_events_percentage'] }}, {{ deck_statistics['inv_skills_percentage'] }}]
+
+      }]
+  });
+
+  Highcharts.chart('chart.slots', {
+      chart: {
+          type: 'column'
+      },
+      title: {
+          text: 'Asset slots usage'
+      },
+      subtitle: {
+          text: 'Total number of slots used'
+      },
+      xAxis: {
+          categories: [
+              'Hand',
+              'Arcane',
+              'Body',
+              'Accessory',
+              'Ally'
+          ],
+          crosshair: true
+      },
+      yAxis: {
+          min: 0,
+          title: {
+              text: '# of slots'
+          }
+      },
+      tooltip: {
+          headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+          pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+              '<td style="padding:0"><b>{point.y:.1f} slots</b></td></tr>',
+          footerFormat: '</table>',
+          shared: true,
+          useHTML: true
+      },
+      plotOptions: {
+          column: {
+              pointPadding: 0.2,
+              borderWidth: 0
+          }
+      },
+      series: [{
+          name: 'Deck',
+          data: [{{ deck_statistics['hand_slot'] }}, {{ deck_statistics['arcane_slot'] }}, {{ deck_statistics['body_slot'] }}, {{ deck_statistics['accessory_slot'] }}, {{ deck_statistics['ally_slot'] }}]
+
+      }, {
+          name: 'Investigator average',
+          data: [{{ deck_statistics['inv_hand_slot'] }}, {{ deck_statistics['inv_arcane_slot'] }}, {{ deck_statistics['inv_body_slot'] }}, {{ deck_statistics['inv_accessory_slot'] }}, {{ deck_statistics['inv_ally_slot'] }}]
+
+      }]
+  });
+
+  Highcharts.chart('chart.cost', {
+      chart: {
+          type: 'column'
+      },
+      title: {
+          text: 'Average cost'
+      },
+      subtitle: {
+          text: 'Average cost per asset and event'
+      },
+      xAxis: {
+          categories: [
+              'Cost'
+          ],
+          crosshair: true
+      },
+      yAxis: {
+          min: 0,
+          title: {
+              text: 'Resources'
+          }
+      },
+      tooltip: {
+          headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+          pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+              '<td style="padding:0"><b>{point.y:.1f} resources </b></td></tr>',
+          footerFormat: '</table>',
+          shared: true,
+          useHTML: true
+      },
+      plotOptions: {
+          column: {
+              pointPadding: 0.2,
+              borderWidth: 0
+          }
+      },
+      series: [{
+          name: 'Deck',
+          data: [{{ deck_statistics['mean_cost'] }}]
+
+      }, {
+          name: 'Investigator average',
+          data: [{{ deck_statistics['inv_mean_cost'] }}]
+
+      }]
+  });
+
+  Highcharts.chart('chart.pips', {
+      chart: {
+          type: 'column'
+      },
+      title: {
+          text: 'Total pips'
+      },
+      subtitle: {
+          text: 'Total sum of card pips'
+      },
+      xAxis: {
+          categories: [
+              'Willpower',
+              'Intellect',
+              'Combat',
+              'Agility',
+              'Wild'
+          ],
+          crosshair: true
+      },
+      yAxis: {
+          min: 0,
+          title: {
+              text: '# of pips'
+          }
+      },
+      tooltip: {
+          headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+          pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+              '<td style="padding:0"><b>{point.y:.1f} pips</b></td></tr>',
+          footerFormat: '</table>',
+          shared: true,
+          useHTML: true
+      },
+      plotOptions: {
+          column: {
+              pointPadding: 0.2,
+              borderWidth: 0
+          }
+      },
+      series: [{
+          name: 'Deck',
+          data: [{{ deck_statistics['skill_willpower'] }}, {{ deck_statistics['skill_intellect'] }}, {{ deck_statistics['skill_combat'] }}, {{ deck_statistics['skill_agility'] }}, {{ deck_statistics['skill_wild'] }}]
+
+      }, {
+          name: 'Investigator average',
+          data: [{{ deck_statistics['inv_skill_willpower'] }}, {{ deck_statistics['inv_skill_intellect'] }}, {{ deck_statistics['inv_skill_combat'] }}, {{ deck_statistics['inv_skill_agility'] }}, {{ deck_statistics['inv_skill_wild'] }}]
+
+      }]
+  });
+  </script>
+{% endblock %}

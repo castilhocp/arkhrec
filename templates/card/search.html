@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% set active_page = 'card' %}
+
+{% block title %}
+Search card
+{% endblock %}
+
+{% block header %}
+
+{% endblock %}
+
+{% block content %}
+<div class="container-xl bg-white mx-auto mt-5 p-3">
+    <div class="row m-2">
+        <h3>Card selection</h3>
+        <p>Select a card to see cards commonly used together and popular investigators for it</p>
+
+
+        <table class="table table-hover" id="cards-table">
+            <thead>
+            <tr><th>Card</th><th>Type</th><th>Slot</th><th>Faction</th><th># of decks</th><th></th></tr></thead>
+            {% for card_code, card in cards.items() %}
+            <tr>   
+                <td>
+                {% if card['faction_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+                <span class="icon icon-{{card['faction_code']}}" title="{{card['faction_code']}}"></span>
+                {% endif %}
+                {% if card['faction2_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+                <span class="icon icon-{{card['faction2_code']}}" title="{{card['faction2_code']}}"></span>
+                {% endif %}
+                {% if card['faction3_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+                <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
+                {% endif %}
+            
+                <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp'] + ')' if card['xp']!='' else ''}}</td></a>
+            
+                <td>{{ card['type_code']|capitalize }}</td>
+                <td>{{ card['slot'] }}</td>
+                <td>{{ card['color']|capitalize }}</td>
+                <td>{{ '%d'|format(card['Uses']) }}</td>
+                <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+        <script>
+        $('#cards-table').DataTable({
+            responsive: true,
+            autoWidth: false,
+            iDisplayLength: 100, 
+            order: [[4, 'desc']],
+            columnDefs: [{
+            targets: 0, render: function(data, type, row, meta) {
+                
+                if (type != 'display') {
+                return data.replace( /<.*?>/g, '' );
+                }
+                return data;
+            }
+            },
+            {
+                targets: 4, width: "10%"
+            }]
+        });
+        </script>
+    </div>
+</div>
+{% endblock %}
