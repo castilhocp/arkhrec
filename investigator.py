@@ -300,7 +300,7 @@ def view(investigator_id):
     print("Events to include: {:d}".format(events_to_include))
     print("Skills to include: {:d}".format(skills_to_include))
     print("\n\n\n")
-    card_cycles_pool = card_cycles_clean.drop(card_reqs.set_index('code_str').index)
+    card_cycles_pool = card_cycles_clean.drop(card_reqs.set_index('code_str').index, errors='ignore')
 
     assets = card_cycles_pool[card_cycles_pool['type_code']=='asset'].sort_values('inv_occurrence', ascending=False).head(int(assets_to_include / 2))
     events = card_cycles_pool[card_cycles_pool['type_code']=='event'].sort_values('inv_occurrence', ascending=False).head(int(events_to_include / 2))
