@@ -25,13 +25,13 @@
                 <div class="col-3">
                     <ul><b>Name:</b> {{investigator_info[investigator_id]['name']}}</ul>
                     <ul><b>Faction:</b> {{investigator_info[investigator_id]['faction_code']|capitalize}}</ul>
-                    <ul><b>Text:</b> {{investigator_info[investigator_id]['text']}}</ul>
+                    <ul><b>Text:</b> {{investigator_info[investigator_id]['text_icons']|safe}}</ul>
                     <ul><b>Occurrence:</b> {{ 'Present in %d out of %d decks analysed (%d%%)'|format(investigator_info[investigator_id]['number_of_decks'], num_of_decks, (100*investigator_info[investigator_id]['number_of_decks'] / num_of_decks)) }}</ul>
                     <ul><b>Popularity:</b>  {{ 'Ranked %d out of %d investigators analysed (percentile %d%%)'|format((investigator_info[investigator_id]['occurrences_rank']),num_of_investigators,100-100*(investigator_info[investigator_id]['occurrences_rank'])/num_of_investigators) }} </ul> 
                 </div>
                 <div class="col-6">
                     <div class="row">
-                        <h3>Average deck</h3>
+                        <h3>Average 0xp deck (size: {{'%.0f'|format(average_deck_size)}})</h3>
                     </div>
                     <div class="row">
                         {% for column in average_deck | slice(2) %}
@@ -39,11 +39,17 @@
                             <ul>
                                     {%- for card in column %}
                                     <li>
-                                        {{'%d'|format(average_deck[card]['deck_limit'])}}x 
+                                        {{'%d'|format(average_deck[card]['amount'])}}x 
                                         {% if average_deck[card]['faction_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
-                                          <span class="icon icon-{{average_deck[card]['faction_code']}}" title="{{average_deck[card]['faction_code']}}"></span>
+                                            <span class="icon icon-{{average_deck[card]['faction_code']}}" title="{{average_deck[card]['faction_code']}}"></span>
                                         {% endif %}
-                                        <a href="{{url_for('card.view',card_id= card)}}" class="{{ average_deck[card]['faction_code'] }}">{{average_deck[card]['name']}}</a>  
+                                        {% if average_deck[card]['faction2_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+                                            <span class="icon icon-{{average_deck[card]['faction2_code']}}" title="{{average_deck[card]['faction2_code']}}"></span>
+                                        {% endif %}
+                                        {% if average_deck[card]['faction3_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
+                                            <span class="icon icon-{{average_deck[card]['faction3_code']}}" title="{{average_deck[card]['faction3_code']}}"></span>
+                                        {% endif %}
+                                        <a href="{{url_for('card.view',card_id= card)}}" class="{{ average_deck[card]['color'] }}">{{average_deck[card]['name']}} {{ '(' + average_deck[card]['xp_text'] + ')' if average_deck[card]['xp_text']!='' else ''}}</a>  
                                     </li>
                                     {% endfor %}
                             </ul>
@@ -147,8 +153,7 @@
       },
       series: [{
           name: '{{investigator_info[investigator_id]['name']}}',
-          data: [{{ deck_statistics['inv_assets_percentage'] }}, {{ deck_statistics['inv_events_percentage'] }}, {{ deck_statistics['inv_skills_percentage'] }}]
-
+          data: [{{ deck_statistics['inv_assets_percentage'] }}, {{ deck_statistics['inv_events_percentage'] }}, {{ deck_statistics['inv_skills_percentage'] }}],
       },
       {
           name: 'Other {{investigator_info[investigator_id]['faction_code']|capitalize}}s',

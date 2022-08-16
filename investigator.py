@@ -2,10 +2,12 @@ import code
 from dataclasses import asdict
 from distutils.log import info
 from lib2to3.pytree import convert
+from msilib import add_stream
 from sqlite3 import adapters
 from unicodedata import name
 from flask import current_app
 import os
+import arkrec.helpers
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
@@ -45,11 +47,9 @@ def search():
     investigators['color'] = investigators['faction_code']
     investigators.loc[investigators['faction2_code'].notna(),'color']='multi'
     investigators = investigators.fillna("-")
-    print(investigators)
     investigators = investigators[investigators['number_of_decks']!='-']
-    print(investigators)
     investigators = investigators.reset_index().set_index('code_str')
-    print(investigators)
+    
     
     return render_template('investigator/search.html', investigators=investigators.to_dict(orient='index'),num_of_decks=num_of_decks)
 
@@ -104,6 +104,7 @@ def view(investigator_id):
     ###################################################################
     investigator = investigators.loc[investigator_id].to_frame()
     investigator = investigator.transpose()
+    investigator['text_icons'] = arkrec.helpers.convert_text_to_icons(investigator['text'][0])
 
     ###################################################################
     # Gets total number of decks and investigators (for the view)
@@ -280,13 +281,61 @@ def view(investigator_id):
     card_reqs = card_cycles[card_cycles['code_str'].isin(card_reqs_codes)]
     card_reqs_quants = card_reqs.groupby('type_code')['quantity'].sum()
 
+
+    import collections
+
+    deck_size_selected = collections.Counter()
+    faction_selected = collections.Counter()
+    two_factions_selected = collections.Counter()
+    alternate_front = collections.Counter()
+    alternate_back = collections.Counter()
+    option_selected = collections.Counter()
+
+    choice_decks=all_decks_clean[all_decks_clean['investigator_name'] == investigator['name'][0]]
+
+    import ast
+
+    for m in choice_decks.meta:
+        if m:
+            m = ast.literal_eval(m)
+            if 'deck_size_selected' in m:
+                deck_size_selected[m['deck_size_selected']] = deck_size_selected[m['deck_size_selected']] + 1/len(choice_decks.meta)
+            if 'faction_selected' in m:
+                faction_selected[m['faction_selected']] = faction_selected[m['faction_selected']] + 1/len(choice_decks.meta)
+            if 'option_selected' in m:
+                option_selected[m['option_selected']] = option_selected[m['option_selected']] + 1/len(choice_decks.meta)
+            if 'alternate_front' in m:
+                alternate_front[m['alternate_front']] = alternate_front[m['alternate_front']] + 1/len(choice_decks.meta)
+            if 'alternate_back' in m:
+                alternate_back[m['alternate_back']] = alternate_back[m['alternate_back']] + 1/len(choice_decks.meta)
+            if 'faction_1' in m:
+                two_factions_selected[m['faction_1']] = two_factions_selected[m['faction_1']] + 1/len(choice_decks.meta)
+            if 'faction_2' in m:
+                two_factions_selected[m['faction_2']] = two_factions_selected[m['faction_2']] + 1/len(choice_decks.meta)
+
+    deck_size_selected['none'] = 1-sum(deck_size_selected.values())
+    two_factions_selected['none']=2-sum(two_factions_selected.values())
+    faction_selected['none'] = 1-sum(faction_selected.values())
+    option_selected['none'] = 1-sum(option_selected.values())
+    alternate_front['none'] = 1-sum(alternate_front.values())
+    alternate_back['none'] = 1-sum(alternate_back.values())
+
+    max_faction_selected = max(faction_selected, key=faction_selected.get)
+    max_deck_size_selected = max(deck_size_selected, key=deck_size_selected.get)
+    
+    df_two_factions_selected = pd.DataFrame.from_dict(two_factions_selected, orient='index')
+    df_two_factions_selected.columns = ['percentage']
+    max_two_factions = df_two_factions_selected['percentage'].nlargest(2)
+    max_faction_1 = df_two_factions_selected[df_two_factions_selected['percentage'] == max_two_factions[0]].head().index[0]
+    max_faction_2 = df_two_factions_selected[df_two_factions_selected['percentage'] == max_two_factions[len(max_two_factions)-1]].head().index[0]
+
+
+    inv_card_deck = card_cycles.set_index('code_str').loc[investigator_id]
+
+    if(max_deck_size_selected != 'none'):
+        deck_size = int(max_deck_size_selected)
+
     total_deck_size = deck_size + card_reqs_quants.sum()
-
-    # print(card_reqs_quants)
-
-    # print(card_reqs_quants['skills'] if 'skill' in card_reqs_quants.index else 0)
-    print((total_deck_size * inv_assets_percentage))
-    print((total_deck_size * inv_events_percentage))
     
     assets_to_include = round((total_deck_size * inv_assets_percentage) - (card_reqs_quants['asset'] if 'asset' in card_reqs_quants.index else 0))
     if(assets_to_include % 2 == 1):
@@ -295,22 +344,116 @@ def view(investigator_id):
     if(events_to_include % 2 == 1):
         events_to_include+=1
     skills_to_include = deck_size - assets_to_include - events_to_include
-    print("\n\n\n")
-    print("Assets to include: {:d}".format(assets_to_include))
-    print("Events to include: {:d}".format(events_to_include))
-    print("Skills to include: {:d}".format(skills_to_include))
-    print("\n\n\n")
-    card_cycles_pool = card_cycles_clean.drop(card_reqs.set_index('code_str').index, errors='ignore')
 
-    assets = card_cycles_pool[card_cycles_pool['type_code']=='asset'].sort_values('inv_occurrence', ascending=False).head(int(assets_to_include / 2))
-    events = card_cycles_pool[card_cycles_pool['type_code']=='event'].sort_values('inv_occurrence', ascending=False).head(int(events_to_include / 2))
-    skills = card_cycles_pool[card_cycles_pool['type_code']=='skill'].sort_values('inv_occurrence', ascending=False).head(int(skills_to_include / 2))
+    card_cycles_pool = card_cycles_clean.drop(card_reqs.set_index('code_str').index, errors='ignore')
+    card_cycles_pool.loc[:,'xp'] = pd.to_numeric(card_cycles_pool['xp'], errors='coerce')
+
+    card_pools = []
+    filter_limits = []
+
+    for do in inv_card_deck.deck_options:
+        if 'faction' in do and 'level' in do and 'limit' not in do:
+            restriction_pool = card_cycles_pool[(card_cycles_pool['faction_code'].isin(do['faction'])) & (card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1)))]
+            card_pools.append(restriction_pool)
+            # Dunwich splash
+            main_factions = do['faction']
+        elif 'faction' in do and 'level' in do and 'limit' in do:
+            restriction_pool = card_cycles_pool[(card_cycles_pool['faction_code'].isin(do['faction'])) & card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1))].sort_values('inv_occurrence', ascending=False).head(do['limit'])
+            filter_limits.append({'factions': do['faction'], 'level': do['level'], 'limit': do['limit']})
+        elif 'level' in do and 'faction' not in do and 'limit' in do:
+            factions = ['guardian', 'mystic', 'seeker', 'rogue', 'survivor', 'neutral']
+            filter_classes = factions
+            
+            for f in main_factions:
+                filter_classes.remove(f)
+            
+            
+            restriction_pool = card_cycles_pool[((card_cycles_pool['faction_code'].isin(filter_classes)) | (card_cycles_pool['faction2_code'].isin(filter_classes)) | (card_cycles_pool['faction3_code'].isin(filter_classes)) ) & card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1))].sort_values('inv_occurrence', ascending=False).head(do['limit'])
+            
+            filter_limits.append({'factions': filter_classes, 'level': do['level'], 'limit': do['limit']})  
+        elif 'name' in do:
+            if do['name'] == 'Secondary Class':
+                restriction_pool = card_cycles_pool[((card_cycles_pool['faction_code'] == max_faction_selected)| (card_cycles_pool['faction2_code'] == max_faction_selected) | (card_cycles_pool['faction3_code'] == max_faction_selected) ) & (card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1))) & (card_cycles_pool['type_code'].isin(do['type']))]
+                if 'limit' in do and 'type' in do:
+                    restriction_pool = restriction_pool[restriction_pool["type_code"]==do['type']].sort_values('inv_occurrence', ascending=False).head(do['limit'])
+                    filter_limits.append({'factions': do['faction'], 'level': do['level'], 'type': do['type'], 'limit': do['limit']})
+                elif 'limit' in do and 'type' not in do:
+                    restriction_pool = restriction_pool.sort_values('inv_occurrence', ascending=False).head()
+                    filter_limits.append({'factions': do['faction'], 'level': do['level'], 'limit': do['limit']})
+                card_pools.append(restriction_pool)
+            elif do['name'] == "Class Choice":
+                if do['id'] == 'faction_1':
+                    restriction_pool = card_cycles_pool[((card_cycles_pool['faction_code'] == max_faction_1) | (card_cycles_pool['faction2_code'] == max_faction_1) | (card_cycles_pool['faction3_code'] == max_faction_1) ) & (card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1)))]
+
+                    card_pools.append(restriction_pool)
+                elif do['id'] == 'faction_2':
+                    
+                    restriction_pool = card_cycles_pool[((card_cycles_pool['faction_code'] == max_faction_2) | (card_cycles_pool['faction2_code'] == max_faction_2) | (card_cycles_pool['faction3_code'] == max_faction_2) )& (card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1)))]
+                    card_pools.append(restriction_pool)
+            
+    card_pool = pd.concat(card_pools)
+    card_pool = card_pool.loc[card_pool.astype(str).drop_duplicates().index].sort_values('inv_occurrence',ascending=False)
+    card_pool = card_pool[card_pool['xp']==0]
+    exclusion_cards = ['In the Thick of It', 'Underworld Support']
+    card_pool = card_pool[~(card_pool['name'].isin(exclusion_cards))]
+    card_pool.loc[:,'deck_limit'] = pd.to_numeric(card_pool['deck_limit'], errors='coerce')
+
+    assets_card_pool = card_pool[card_pool['type_code']=='asset']
+    assets_card_pool.loc[:, 'cumsum_deck_limit'] = assets_card_pool['deck_limit'].cumsum()
+
+    events_card_pool = card_pool[card_pool['type_code']=='event']
+    events_card_pool.loc[:, 'cumsum_deck_limit'] = events_card_pool['deck_limit'].cumsum()
+
+    skills_card_pool = card_pool[card_pool['type_code']=='skill']
+    skills_card_pool.loc[:, 'cumsum_deck_limit'] = skills_card_pool['deck_limit'].cumsum()
+
+
+    # assets = card_pool[card_pool['type_code']=='asset'].sort_values('inv_occurrence', ascending=False).head(int(assets_to_include / 2))
+    assets = assets_card_pool[assets_card_pool['cumsum_deck_limit']<=assets_to_include]
+    events = events_card_pool[events_card_pool['cumsum_deck_limit']<=events_to_include]
+    skills = skills_card_pool[skills_card_pool['cumsum_deck_limit']<=skills_to_include]
 
     average_deck = skills.append(assets.append(events))
+    average_deck.loc[:,'amount'] = average_deck['deck_limit']
 
+    # check deck size
+    final_deck_size = average_deck['amount'].sum()
 
-    return render_template('investigator/view.html', investigator_info=investigator.to_dict(orient='index'), investigator_id=investigator_id, card_info=card_cycles_clean.to_dict(orient='index'), num_of_decks=num_of_decks, num_of_investigators=num_of_investigators, deck_statistics=deck_statistics, average_deck = average_deck.to_dict(orient='index'))
+    while final_deck_size < deck_size:
+        new_card_pool = card_pool.drop(average_deck.index, errors='ignore').sort_values('inv_occurrence', ascending=False)
+        
+        new_card_pool.loc[:,'cumsum_deck_limit'] = new_card_pool['deck_limit'].cumsum()
+        next_card_to_include = new_card_pool.head(1)
+
+        
+        if (final_deck_size - deck_size) < next_card_to_include['deck_limit'][0]:
+
+            next_card_to_include['amount'] =  deck_size - final_deck_size
+            inclusions_to_deck = next_card_to_include
+
+        else:
+
+            inclusions_to_deck = new_card_pool[new_card_pool['cumsum_deck_limit']<(final_deck_size - deck_size)]
+            inclusions_to_deck.loc[:,'amount'] = inclusions_to_deck['deck_limit']
+
+            
+            
+        
+        average_deck = average_deck.append(inclusions_to_deck)  
+
+        
+        final_deck_size = average_deck['amount'].sum()          
+
+        
+
+    average_deck['color'] = average_deck['faction_code']
+    
+    average_deck.loc[average_deck['faction2_code']!="-",'color']='multi'
+    average_deck = average_deck.sort_values('type_code')
+    
+    return render_template('investigator/view.html', investigator_info=investigator.to_dict(orient='index'), investigator_id=investigator_id, card_info=card_cycles_clean.to_dict(orient='index'), num_of_decks=num_of_decks, num_of_investigators=num_of_investigators, deck_statistics=deck_statistics, average_deck = average_deck.to_dict(orient='index'), average_deck_size = final_deck_size)
 
 def convert_xp_to_str(cards):
-    cards.loc[:,'xp'] = cards.loc[:,'xp'].to_frame().applymap(lambda x: "{:0.0f}".format(x) if x>0 else '')
+    cards.loc[:,'xp_text'] = cards.loc[:,'xp_text'].to_frame().applymap(lambda x: "{:0.0f}".format(x) if x>0 else '')
     return cards
+

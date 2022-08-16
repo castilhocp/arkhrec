@@ -1,6 +1,7 @@
 from lib2to3.pytree import convert
 from flask import current_app
 import os
+import arkrec.helpers
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
@@ -34,10 +35,7 @@ def search():
     card_cycles_clean = card_cycles_clean.join(card_cooc_stacked.to_frame('Uses').reset_index(level=[0]))
     card_cycles_clean = card_cycles_clean.fillna("-")
     card_cycles_clean = card_cycles_clean.drop('01000')
-    print(card_cycles_clean, flush=True)
-
-    print(len(card_cycles), flush=True)
-    print(len(card_cycles_clean), flush=True)
+    
     
     
     return render_template('card/search.html', cards=card_cycles_clean.to_dict(orient='index'),num_of_decks=num_of_decks)
@@ -54,7 +52,7 @@ def view(card_id):
     tuples = list(zip(card_cooc.index, card_cooc.index))
     card_cooc_stacked = card_cooc.stack()[tuples].to_frame('Occurrences').reset_index(level=[0])
     cooc_with_card = card_cooc[card_id].to_frame('Cooccurrences')
-    print(cooc_with_card)
+    
 
     num_of_decks = len(all_decks_clean)
     num_of_cards = len(card_frequencies_clean)
@@ -90,7 +88,9 @@ def view(card_id):
     
     card_cycles_clean = card_cycles_clean.fillna("-")
     card_cycles_clean = card_cycles_clean.drop('01000')
-    print(card_cycles_clean, flush=True)
+
+    card_cycles_clean.loc[:,'text_icons'] = card_cycles_clean['text'].apply(arkrec.helpers.convert_text_to_icons)
+    
 
     return render_template('card/view.html', card_id=card_id, card_info=card_cycles_clean.to_dict(orient='index'), investigators=selected_card_inv_cooc.to_dict(orient='index'), num_of_decks=num_of_decks, num_of_cards=num_of_cards)
 
