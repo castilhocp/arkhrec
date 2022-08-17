@@ -1,7 +1,7 @@
 from lib2to3.pytree import convert
 from flask import current_app
 import os
-import arkrec.helpers
+import arkhrec.helpers
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
@@ -89,7 +89,7 @@ def view(card_id):
     card_cycles_clean = card_cycles_clean.fillna("-")
     card_cycles_clean = card_cycles_clean.drop('01000')
 
-    card_cycles_clean.loc[:,'text_icons'] = card_cycles_clean['text'].apply(arkrec.helpers.convert_text_to_icons)
+    card_cycles_clean.loc[:,'text_icons'] = card_cycles_clean['text'].apply(arkhrec.helpers.convert_text_to_icons)
     
 
     return render_template('card/view.html', card_id=card_id, card_info=card_cycles_clean.to_dict(orient='index'), investigators=selected_card_inv_cooc.to_dict(orient='index'), num_of_decks=num_of_decks, num_of_cards=num_of_cards)

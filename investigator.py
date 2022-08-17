@@ -7,7 +7,7 @@ from sqlite3 import adapters
 from unicodedata import name
 from flask import current_app
 import os
-import arkrec.helpers
+import arkhrec.helpers
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
@@ -104,7 +104,7 @@ def view(investigator_id):
     ###################################################################
     investigator = investigators.loc[investigator_id].to_frame()
     investigator = investigator.transpose()
-    investigator['text_icons'] = arkrec.helpers.convert_text_to_icons(investigator['text'][0])
+    investigator['text_icons'] = arkhrec.helpers.convert_text_to_icons(investigator['text'][0])
 
     ###################################################################
     # Gets total number of decks and investigators (for the view)
