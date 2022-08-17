@@ -26,7 +26,15 @@ def view(deck_id):
     # Read deck from ArkhamDB
     # deck_id = '2103914'
     deck_url = "http://arkhamdb.com/api/public/deck/"
-    status_code = requests.get(deck_url+str(deck_id), verify=False)
+    try:
+        status_code = requests.get(deck_url+str(deck_id), verify=False)
+    except  requests.exceptions.RequestException as e:
+        flash('Failed to fetch deck data from ArkhamDB')
+        return redirect(url_for('deck.search'))
+    if (not status_code.ok) or (status_code.headers['Content-Type'] != 'application/json'):
+        flash('Failed to fetch deck data from ArkhamDB')
+        return redirect(url_for('deck.search'))
+
     # Read the deck from ArkhamDB's response
     deck_to_compare = pd.read_json("["+status_code.text+"]", orient='records')
     
