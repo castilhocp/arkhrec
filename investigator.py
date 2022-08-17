@@ -1,10 +1,16 @@
+from dataclasses import asdict
 from flask import current_app
 import os
 import arkhrec.helpers
+import math
 
 from flask import (
     Blueprint, redirect, render_template, request, url_for
 )
+
+bonus_experience = {
+    'Father Mateo': 5
+}
 
 bp = Blueprint('investigator', __name__, url_prefix='/investigator')
 
@@ -384,7 +390,8 @@ def view(investigator_id):
                     card_pools.append(restriction_pool)
             
     card_pool = pd.concat(card_pools)
-    card_pool = card_pool.loc[card_pool.astype(str).drop_duplicates().index].sort_values('inv_occurrence',ascending=False)
+    card_pool = card_pool.loc[card_pool.astype(str).drop_duplicates().index].sort_values(['inv_occurrence','synergy'],ascending=False)
+    card_pool_xp = card_pool[card_pool['xp']>0]
     card_pool = card_pool[card_pool['xp']==0]
     exclusion_cards = ['In the Thick of It', 'Underworld Support']
     card_pool = card_pool[~(card_pool['name'].isin(exclusion_cards))]
@@ -412,7 +419,7 @@ def view(investigator_id):
     final_deck_size = average_deck['amount'].sum()
 
     while final_deck_size < deck_size:
-        new_card_pool = card_pool.drop(average_deck.index, errors='ignore').sort_values('inv_occurrence', ascending=False)
+        new_card_pool = card_pool.drop(average_deck.index, errors='ignore').sort_values(['inv_occurrence','synergy'], ascending=False)
         
         new_card_pool.loc[:,'cumsum_deck_limit'] = new_card_pool['deck_limit'].cumsum()
         next_card_to_include = new_card_pool.head(1)
@@ -434,16 +441,92 @@ def view(investigator_id):
         average_deck = average_deck.append(inclusions_to_deck)  
 
         
-        final_deck_size = average_deck['amount'].sum()          
+        final_deck_size = average_deck['amount'].sum()
 
+    if investigator['name'][0] in bonus_experience:
+        print("\n\n\n\n\nCARDPOOL XP")
+        print(card_pool_xp)
+        xp_cards_to_include = pd.DataFrame()
+        total_xp_to_include = bonus_experience[investigator['name'][0]]
+        xp_to_include = total_xp_to_include
+        # Get xp cards to include
+        while True:
+            card_pool_xp.loc[:, 'cumsum_deck_limit'] = card_pool_xp['deck_limit'].cumsum()
+            card_pool_xp.loc[:, 'total_xp'] = card_pool_xp['deck_limit'] * card_pool_xp['xp']
+            card_pool_xp.loc[:, 'cumsum_xp'] = card_pool_xp['total_xp'].cumsum()
+            if card_pool_xp.head(1)['xp'][0] > xp_to_include:
+                print("\n\n entrei if")
+                print("card_pool head xp: {:f}".format(card_pool_xp.head(1)['xp'][0]))
+                print("xp_to_include: {:f}".format(xp_to_include))
+                card_pool_xp = card_pool_xp.drop(card_pool_xp.head(1).index)
+            elif card_pool_xp.head(1)['cumsum_xp'][0] > xp_to_include:
+                print("\n\n entrei ELif")
+                print("card_pool head xp: {:f}".format(card_pool_xp.head(1)['cumsum_xp'][0]))
+                print("xp_to_include: {:f}".format(xp_to_include))
+                print(card_pool_xp.head(1))
+                xp_cards = card_pool_xp.head(1)
+                card_pool_xp = card_pool_xp.drop(xp_cards.index)
+                xp_cards.loc[:,'amount'] = math.floor(xp_to_include / xp_cards['xp'])
+                print(xp_cards)
+                xp_cards_to_include = xp_cards_to_include.append(xp_cards)
+            else:
+                print("\n\n entrei else")
+                print("xp_to_include: {:f}".format(xp_to_include))
+                print(card_pool_xp.head(1))
+                xp_cards = card_pool_xp[card_pool_xp['cumsum_xp']<xp_to_include]
+                print("\n\n")
+                print(xp_cards, flush=True)
+                print(card_pool_xp, flush=True)
+                print("\n\n")
+                card_pool_xp = card_pool_xp.drop(xp_cards.index)
+                xp_cards.loc[:,'amount'] = xp_cards['deck_limit']
+                xp_cards_to_include = xp_cards_to_include.append(xp_cards)
+                
+            
+            xp_cards_to_include.loc[:,'total_xp'] = xp_cards_to_include['amount'] * xp_cards_to_include['xp']
+            included_xp = xp_cards_to_include['total_xp'].sum()
+            xp_to_include = total_xp_to_include - included_xp
+            print("\n\n CONDICAO DE PARADA")
+            print(xp_to_include)
+            if xp_to_include <= 0:
+                break
+        # Exclude least similar 0xp cards
+        number_of_cards_to_include = xp_cards_to_include['amount'].sum()
+        average_deck = average_deck.sort_values('inv_occurrence')
+        average_deck.loc[:,"cumsum_amount"] = average_deck['amount'].cumsum()
         
+        number_of_cards_to_exclude = number_of_cards_to_include
+        while True:
+            if average_deck.head(1)['cumsum_amount'][0] > number_of_cards_to_exclude:
+                
+                
+                average_deck.at[average_deck.head(1).index[0], 'amount'] = average_deck.head(1)['amount']-number_of_cards_to_exclude
+                
+                
+            else:
+                
+                average_deck = average_deck[average_deck['cumsum_amount']>number_of_cards_to_exclude]
+                
+            number_of_cards_to_exclude = average_deck['amount'].sum()+number_of_cards_to_include-deck_size
+            
+            if average_deck['amount'].sum() <= deck_size - number_of_cards_to_include:
+                break
+        average_deck = average_deck.append(xp_cards_to_include)
 
+
+
+
+    average_deck.sort_values(['type_code','inv_occurrence'])
     average_deck['color'] = average_deck['faction_code']
+    average_deck['total_xp'] = average_deck['amount'] * average_deck['xp']
     
     average_deck.loc[average_deck['faction2_code']!="-",'color']='multi'
     average_deck = average_deck.sort_values('type_code')
+
+    print("\n\n\n\n\nAVERAGE DECK")
+    print(average_deck)
     
-    return render_template('investigator/view.html', investigator_info=investigator.to_dict(orient='index'), investigator_id=investigator_id, card_info=card_cycles_clean.to_dict(orient='index'), num_of_decks=num_of_decks, num_of_investigators=num_of_investigators, deck_statistics=deck_statistics, average_deck = average_deck.to_dict(orient='index'), average_deck_size = final_deck_size)
+    return render_template('investigator/view.html', investigator_info=investigator.to_dict(orient='index'), investigator_id=investigator_id, card_info=card_cycles_clean.to_dict(orient='index'), num_of_decks=num_of_decks, num_of_investigators=num_of_investigators, deck_statistics=deck_statistics, average_deck = average_deck.to_dict(orient='index'), average_deck_size = average_deck['amount'].sum(), average_deck_xp = average_deck['total_xp'].sum())
 
 def convert_xp_to_str(cards):
     cards.loc[:,'xp_text'] = cards.loc[:,'xp_text'].to_frame().applymap(lambda x: "{:0.0f}".format(x) if x>0 else '')
