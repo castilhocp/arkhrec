@@ -1,18 +1,10 @@
-import code
-from dataclasses import asdict
-from distutils.log import info
-from lib2to3.pytree import convert
-from msilib import add_stream
-from sqlite3 import adapters
-from unicodedata import name
 from flask import current_app
 import os
 import arkhrec.helpers
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, redirect, render_template, request, url_for
 )
-from werkzeug.security import check_password_hash, generate_password_hash
 
 bp = Blueprint('investigator', __name__, url_prefix='/investigator')
 

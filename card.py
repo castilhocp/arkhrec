@@ -1,12 +1,10 @@
-from lib2to3.pytree import convert
 from flask import current_app
 import os
 import arkhrec.helpers
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, redirect, render_template, request, url_for
 )
-from werkzeug.security import check_password_hash, generate_password_hash
 
 bp = Blueprint('card', __name__, url_prefix='/card')
 
