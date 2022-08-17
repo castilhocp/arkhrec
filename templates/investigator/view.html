@@ -19,17 +19,17 @@
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-lg-3">
                     <img src="https://arkhamdb.com/bundles/cards/{{investigator_id}}.png" style="width: 100%"></img>
                 </div>
-                <div class="col-md-3">
+                <div class="col-lg-3">
                     <ul><b>Name:</b> {{investigator_info[investigator_id]['name']}}</ul>
                     <ul><b>Faction:</b> {{investigator_info[investigator_id]['faction_code']|capitalize}}</ul>
                     <ul><b>Text:</b> {{investigator_info[investigator_id]['text_icons']|safe}}</ul>
                     <ul><b>Occurrence:</b> {{ 'Present in %d out of %d decks analysed (%d%%)'|format(investigator_info[investigator_id]['number_of_decks'], num_of_decks, (100*investigator_info[investigator_id]['number_of_decks'] / num_of_decks)) }}</ul>
                     <ul><b>Popularity:</b>  {{ 'Ranked %d out of %d investigators analysed (percentile %d%%)'|format((investigator_info[investigator_id]['occurrences_rank']),num_of_investigators,100-100*(investigator_info[investigator_id]['occurrences_rank'])/num_of_investigators) }} </ul> 
                 </div>
-                <div class="col-md-6">
+                <div class="col-lg-6">
                     <div class="row">
                         <h3>Average 0xp deck (size: {{'%.0f'|format(average_deck_size)}})</h3>
                     </div>
