@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}
+Investigators map
+{% endblock %}
+
+{% block header %}
+
+<style>
+    html {
+        overflow-y:scroll;
+    }
+</style>
+
+<script type="text/javascript">
+    var inv_info = JSON.parse('{{all_decks|safe}}');
+    var inv_summaries = JSON.parse('{{investigator_summary|safe}}');
+    
+    var inv_id = 0;
+    
+</script>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid mt-2">
+    <div class="row p-2">
+        <div class="col-lg-8 order-lg-3" style="height:900px">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="subheader">Deck map</h3>
+                </div>
+                <div class="card-body">
+                    <div id="deck_map_scatter"></div>
+                    <p class="highcharts-description">
+                        All decks published between Jan 01st 2022 and Aug 03rd 2022 on ArkhamDB.
+                        Closer points mean decks have a higher card overlap.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="subheader" id="inv_summary_header">Investigator</h3>
+                </div>
+                <div class="card-body">
+                    <div id="row">
+                        <div id="similar_cards">
+                            Hover or click over a deck on the map to see information about that investigator
+                        </div>
+                    </div>
+                    <div id="row">
+                        <div id="similar_investigators">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="subheader">Deck info</h3>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li id="deck_name"><b>Deck name:</b> </li>
+                    </ul>
+                    <hr>
+                    <h4>Cards</h4>
+                    <div id="decklist">
+                        Hover or click over a deck on the map to see the cards present on that deck
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- <script type="text/javascript">
+    
+    inv_id = data.points[0].customdata[1];
+    console.log(inv_id);
+    $("#deck_name").html("<b>Deck name:</b> " + inv_info['name'][inv_id])
+    $("#decklist").html(inv_info['deck_html'][inv_id])
+    $("#similar_cards").html(inv_summaries['similar_cards_html'][inv_info['investigator_name'][inv_id]])
+    $("#similar_investigators").html(inv_summaries['similar_investigators_html'][inv_info['investigator_name'][inv_id]])
+    $("#inv_summary_header").html(inv_info['investigator_name'][inv_id])
+    
+</script> -->
+
+<script type="text/javascript">
+    $.getJSON("{{url_for('static', filename='data/deck_scatter.json')}}", function(json) {
+  
+    Highcharts.chart('deck_map_scatter', {
+    chart: {
+        type: 'scatter',
+        zoomType: 'xy',
+        height:'60%'        
+    },
+    title: {
+        text: 'Arkham Horror LCG 2022 Deck Map'
+    },
+    subtitle: {
+        text: 'Source: ArkhamDB.com'
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'right',
+        verticalAlign: 'top',
+        floating: false,
+        backgroundColor: Highcharts.defaultOptions.chart.backgroundColor,
+        borderWidth: 1
+    },
+    plotOptions: {
+        scatter: {
+            marker: {
+                radius: 3,
+                states: {
+                    hover: {
+                        enabled: true,
+                        lineColor: 'rgb(100,100,100)',
+                        radius: 10
+                    }
+                },
+                symbol: 'circle'
+            },
+            states: {
+                hover: {
+                    marker: {
+                        enabled: false
+                    }
+                }
+            },
+            tooltip: {
+                headerFormat: '<b>{series.name}</b><br>',
+                pointFormat: 'Deck id: {point.id}'
+            },
+            stickyTracking:false
+        },
+        series: {
+            point: {
+                events: {
+                    mouseOver: function() {
+                        var inv_id = this.id;
+                        $("#deck_name").html("<b>Deck name:</b> " + inv_info['name'][inv_id])
+                        $("#decklist").html(inv_info['deck_html'][inv_id])
+                        $("#similar_cards").html(inv_summaries['similar_cards_html'][inv_info['investigator_name'][inv_id]])
+                        $("#similar_investigators").html(inv_summaries['similar_investigators_html'][inv_info['investigator_name'][inv_id]])
+                        $("#inv_summary_header").html(inv_info['investigator_name'][inv_id])
+                    }
+                }
+            }
+        }
+    },
+    series: json
+});
+});
+
+</script>
+{% endblock %}
+        
+              

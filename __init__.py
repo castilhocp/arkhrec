@@ -11,7 +11,7 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
+        # DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
         # CACHE_TYPE="SimpleCache",  # Flask-Caching related configs
         # CACHE_DEFAULT_TIMEOUT=300
     )
@@ -39,6 +39,9 @@ def create_app(test_config=None):
 
     from . import investigator
     app.register_blueprint(investigator.bp)
+
+    from . import map
+    app.register_blueprint(map.bp)
 
     @app.route('/')
     def index():

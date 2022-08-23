@@ -32,7 +32,7 @@ Select investigator
                 <span class="icon icon-{{investigator['faction3_code']}}" title="{{investigator['faction3_code']}}"></span>
                 {% endif %}
             
-                <a href="{{url_for('investigator.view', investigator_id=investigator_code)}}" class="{{ investigator['color'] }}">{{ investigator['name'] }}</td></a>
+                <a href="{{url_for('investigator.view', investigator_id=investigator_code)}}" class="{{ investigator['color'] }}">{{ investigator['name'] }}</a></td>
             
                 <td>{{ investigator['faction_code']|capitalize }}</td>
                 <td>{{ '%d'|format(investigator['number_of_decks']) }}</td>

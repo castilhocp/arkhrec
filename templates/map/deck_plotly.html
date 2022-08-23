@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}
+Investigators map
+{% endblock %}
+
+{% block header %}
+
+<script type="text/javascript">
+    var inv_info = JSON.parse('{{all_decks|safe}}');
+    var inv_summaries = JSON.parse('{{investigator_summary|safe}}');
+    var inv_id = 0;
+    
+</script>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid mt-2">
+        <div class="col-lg-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="subheader" id="inv_summary_header">Investigator summary</h3>
+                </div>
+                <div class="card-body">
+                    <div id="row">
+                        <div id="similar_cards">
+                        </div>
+                    </div>
+                    <div id="row">
+                        <div id="similar_investigators">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="subheader">Deck info</h3>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li id="deck_name"><b>Deck name:</b> </li>
+                    </ul>
+                    <hr>
+                    <h4>Cards</h4>
+                    <div id="decklist">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8 p-4" style="height:900px">
+            <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+            <script type="text/javascript" src="{{ url_for('static', filename='scripts/plotly_base.js') }}">  </script>
+            <div id="8f69eacd-95e5-4492-9f5f-94f96f99ea52" class="plotly-graph-div" style="height:100%; width:100%;"></div> 
+            <script type="text/javascript" src="{{ url_for('static', filename='scripts/deck_map.js') }}">  </script>
+        </div>
+</div>
+
+<script type="text/javascript">
+    document.getElementById("8f69eacd-95e5-4492-9f5f-94f96f99ea52").on('plotly_hover', function(data){
+    inv_id = data.points[0].customdata[1];
+    console.log(inv_id);
+    $("#deck_name").html("<b>Deck name:</b> " + inv_info['name'][inv_id])
+    $("#decklist").html(inv_info['deck_html'][inv_id])
+    $("#similar_cards").html(inv_summaries['similar_cards_html'][inv_info['investigator_name'][inv_id]])
+    $("#similar_investigators").html(inv_summaries['similar_investigators_html'][inv_info['investigator_name'][inv_id]])
+    $("#inv_summary_header").html(inv_info['investigator_name'][inv_id])
+    })
+</script>
+{% endblock %}
+        
+              
