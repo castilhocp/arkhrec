@@ -9,6 +9,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 bp = Blueprint('deck', __name__, url_prefix='/deck')
 
+import arkhrec.investigator
+
 @bp.route('/', methods=['GET', 'POST'])
 def search():
     
@@ -38,7 +40,6 @@ def view(deck_id):
     # Read the deck from ArkhamDB's response
     deck_to_compare = pd.read_json("["+status_code.text+"]", orient='records')
     
-
     card_cycles = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_cycles.pickle'))
 
     duplicates = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'duplicates.pickle'))
@@ -66,20 +67,41 @@ def view(deck_id):
     
     exclusion_recs = recommendations[deck_to_compare_clean['slots'][0].keys()].to_frame('Jaccard Score')
     exclusion_recs.loc[:,'Jaccard Score'] = exclusion_recs.applymap(lambda x: "{:0.2f}".format(x))
-    # exclusion_recs_template = exclusion_recs.join(card_cycles[['code_str','name','pack_code', 'faction_code']].set_index('code_str')).sort_values(by='Jaccard Score').to_dict('index')
+    
     inv_recommendations = inv_cooc_ratio.loc[deck_to_compare['investigator_name'][0],:].transpose().to_frame('Coocurrence')
     inv_recommendations.loc[:,'Coocurrence'] = inv_recommendations.applymap(lambda x: "{:0.0%}".format(x))
     inv_inclusion_recs = inv_recommendations[~inv_recommendations.index.isin(deck_to_compare['slots'][0].keys())].join(card_cycles[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp']].set_index('code_str'))
 
     inclusion_recs = inclusion_recs.join(inv_inclusion_recs['Coocurrence'])
 
-    # inv_inclusion_recs = inv_inclusion_recs[inv_inclusion_recs['type_code'].isin(['asset','event', 'skill'])][['name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp', 'Coocurrence']]
-    # inv_inclusion_recs = inv_inclusion_recs.sort_values(by=inv_recommendations.columns[0],ascending=False)
-    
-    # print(inv_inclusion_recs)
     inv_exclusion_recs = inv_recommendations[inv_recommendations.index.isin(deck_to_compare['slots'][0].keys())].join(card_cycles[['code_str','name','pack_code', 'faction_code']].set_index('code_str')).sort_values(by=inv_recommendations.columns[0],ascending=True)
 
-    # deck_to_compare_with_info = pd.DataFrame.from_dict(deck_to_compare['slots'][0],orient='index').join(card_cycles[['code_str','name','type_code','cost']].set_index('code_str'))
+    import ast
+
+    m = deck_to_compare.meta[0]
+    print(deck_to_compare.columns)
+    ms=['','']
+    fs=[]
+    if m:
+        m = ast.literal_eval(m)
+        if 'faction_selected' in m:
+            fs = m['faction_selected']
+        if 'faction_1' in m:
+            ms[0] = m['faction_1']
+        if 'faction_2' in m:
+            ms[1] = m['faction_2']
+
+    inv_card_deck = card_cycles.set_index('code_str').loc[str(deck_to_compare['investigator_code'][0]).zfill(5)]
+
+    print(inv_card_deck.deck_options)
+    print(fs)
+    print(ms)
+    allowed_card_pool = arkhrec.investigator.cards_valid_for_investigator(card_cycles, inv_card_deck.deck_options, single_faction_selected=fs, multi_faction_selected=ms).set_index('code_str')
+
+    print(inclusion_recs)
+    inclusion_recs = inclusion_recs.loc[inclusion_recs.index & allowed_card_pool.index]
+    print(inclusion_recs)
+
     deck_to_compare_with_info = pd.DataFrame.from_dict(deck_to_compare['slots'][0],orient='index').join(
             card_cycles[['code_str','name','type_code','cost',"skill_willpower", "skill_agility", "skill_combat", "skill_intellect", "skill_wild", "slot"]].set_index(
             'code_str'))
@@ -91,7 +113,7 @@ def view(deck_id):
 
     type_distribution = deck_to_compare_with_info.groupby('type_code')[0].sum()
     type_distribution = type_distribution / type_distribution.sum()
-    #type_distribution
+    
 
     deck_to_compare_with_info['w_costs']=deck_to_compare_with_info['cost'] * deck_to_compare_with_info[0]
     mean_cost = deck_to_compare_with_info[~deck_to_compare_with_info.cost.isnull()]['w_costs'].sum() / deck_to_compare_with_info[~deck_to_compare_with_info.cost.isnull()][0].sum()
@@ -160,33 +182,6 @@ def view(deck_id):
         'inv_skill_intellect': inv_skill_intellect,
         'inv_skill_wild': inv_skill_wild
         }
-    # print(inv_exclusion_recs)
-    # print("Mean cost: {:f}".format(all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['mean_cost'].mean()))
-    # print("Assets:  {:f}".format(all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['asset_percentages'].mean()))
-    # print("Events:  {:f}".format(all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['event_percentages'].mean()))
-    # print("Skills:  {:f}".format(all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['skill_percentages'].mean()))
-    # print("Treachery:  {:f}".format(all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['treachery_percentages'].mean()))
-
-    # deck_to_compare_with_info = pd.DataFrame.from_dict(deck_to_compare['slots'][0],orient='index').join(card_cycles[['code_str','name','type_code','cost']].set_index('code_str'))
-    # type_distribution = deck_to_compare_with_info.groupby('type_code')[0].sum()
-    # type_distribution = type_distribution / type_distribution.sum()
-    # #type_distribution
-
-    # deck_to_compare_with_info['w_costs']=deck_to_compare_with_info['cost'] * deck_to_compare_with_info[0]
-    # mean_cost = deck_to_compare_with_info[~deck_to_compare_with_info.cost.isnull()]['w_costs'].sum() / deck_to_compare_with_info[~deck_to_compare_with_info.cost.isnull()][0].sum()
-
-    # assets_percentage_in_deck = type_distribution['asset'] if 'asset' in type_distribution.index else 0
-    # treachery_percentage_in_deck = type_distribution['treachery'] if 'treachery' in type_distribution.index else 0
-    # skill_percentage_in_deck = type_distribution['skill'] if 'skill' in type_distribution.index else 0
-    # event_percentage_in_deck = type_distribution['event'] if 'event' in type_distribution.index else 0
-
-    # print("Mean cost: {:f}".format(mean_cost))
-    # print("Assets:  {:f}".format(assets_percentage_in_deck))
-    # print("Events:  {:f}".format(event_percentage_in_deck))
-    # print("Skills:  {:f}".format(skill_percentage_in_deck))
-    # print("Treachery:  {:f}".format(treachery_percentage_in_deck))
-
-
 
     deck = pd.DataFrame.from_dict(
         deck_to_compare.loc[:,'slots'][0], orient='index', columns=['count']).join(
@@ -198,7 +193,8 @@ def view(deck_id):
     deck_info['investigator_code'] = str(deck_info['investigator_code']).zfill(5)
     deck_info['date_creation'] = deck_info['date_creation'][0:10]
     deck_info['date_update'] = deck_info['date_update'][0:10]
-    deck_info['xp'] = "{:0.0f}".format(deck['xp'].sum())
+    deck['total_xp'] = deck['xp'] * deck['count']
+    deck_info['xp'] = "{:0.0f}".format(deck['total_xp'].sum())
     deck_info['total_cards'] = deck['count'].sum()
     deck_info['inv_deck_count'] = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]].count()[0]
 
@@ -212,11 +208,6 @@ def view(deck_id):
     inclusion_recs.loc[inclusion_recs['faction2_code'].notna(),'color']='multi'
     inclusion_recs = convert_xp_to_str(inclusion_recs)
     inclusion_recs = inclusion_recs.fillna("-")
-
-    inv_inclusion_recs['color'] = inv_inclusion_recs['faction_code']
-    inv_inclusion_recs.loc[inv_inclusion_recs['faction2_code'].notna(),'color']='multi'
-    inv_inclusion_recs = convert_xp_to_str(inv_inclusion_recs)
-    inv_inclusion_recs = inv_inclusion_recs.fillna("-")
 
     return render_template('deck/view.html', deck=deck.to_dict('index'), inclusion_recs=inclusion_recs.to_dict('index'), deck_statistics=deck_statistics, deck_info=deck_info)
 

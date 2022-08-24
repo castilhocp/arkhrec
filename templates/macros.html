@@ -1,7 +1,7 @@
 {% macro generate_deck_table(deck) -%}
 <table class="table table-hover" id="decklist-table">
   <thead>
-  <tr><th></th><th>Card</th><th>Type</th><th>Slot</th><th>Similarity <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="How much a card is similar to all other cards in deck. More similar cards have higher scores."></i></th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
+  <tr><th></th><th>Card</th><th>Level</th><th>Type</th><th>Slot</th><th>Similarity <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="How much a card is similar to all other cards in deck. More similar cards have higher scores."></i></th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
 {% for card_code, card in deck.items() %}
 <tr>   
   <td>{{ card['count'] }}x</td>   
@@ -16,9 +16,10 @@
       <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp'] + ')' if card['xp']!='' else ''}}</td></a>
+      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }}</td></a>
     
-    <td>{{ card['type_code'] }}</td>
+    <td>{{ card['xp'] if card['xp']!='' else '0'}}</td>
+    <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>
     <td>{{ card['Jaccard Score'] }}</td>
     <td>{{ card['Coocurrence'] }}</td>
@@ -31,7 +32,7 @@
       responsive: true,
       paging: false,
       autoWidth: false,
-      order: [[4, 'desc']],
+      order: [[5, 'desc']],
       columnDefs: [{
         targets: 0, render: function(data, type, row, meta) {
           
@@ -51,7 +52,7 @@
 {% macro generate_rec_table(deck) -%}
 <table class="table table-hover" id="rec-table">
   <thead>
-  <tr><th>Card</th><th>Type</th><th>Slot</th><th>Similarity <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="How much a card is similar to all other cards in deck. More similar cards have higher scores."></i></th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
+  <tr><th>Card</th><th>Level</th><th>Type</th><th>Slot</th><th>Similarity <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="How much a card is similar to all other cards in deck. More similar cards have higher scores."></i></th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
 {% for card_code, card in deck.items() %}
 <tr>   
       <td>
@@ -65,9 +66,10 @@
       <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp'] + ')' if card['xp']!='' else ''}}</td></a>
+      <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }}</td></a>
     
-    <td>{{ card['type_code'] }}</td>
+    <td>{{ card['xp'] if card['xp']!='' else '0'}}</td>
+    <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>
     <td>{{ card['Jaccard Score'] }}</td>
     <td>{{ card['Coocurrence'] }}</td>
@@ -80,7 +82,7 @@
       responsive: true,
       autoWidth: false,
       iDisplayLength: 10, 
-      order: [[3, 'desc']],
+      order: [[4, 'desc']],
       columnDefs: [{
         targets: 0, render: function(data, type, row, meta) {
           
@@ -98,10 +100,17 @@
 {%- endmacro %}
 
 
-{% macro generate_card_table(cards) -%}
+{% macro generate_card_table(cards, selected_card_id) -%}
 <table class="table table-hover" id="card-similarity-table">
   <thead>
-  <tr><th>Card</th><th>Type</th><th>Slot</th><th>Occurrence</th><th>Cooccurrence</th><th>Cooccurence ratio <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks that carry both cards, from all the decks that carry any of these cards. 100% means they always appear together in a deck. 0% that they never appear together in a deck."></i></th><th></th></tr></thead>
+  <tr>
+    <th>Card</th>
+    <th>Level</th>
+    <th>Type</th>
+    <th>Slot</th>
+    <th>Occurrence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Number of decks this card appear."></i></th>
+    <th>Cooccurrence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Number of decks this card appear with {{cards[selected_card_id]['name']}} {{ '('+cards[selected_card_id]['xp']+')' if cards[selected_card_id]['xp']!='' else ''}}."></i></th>
+    <th>Cooccurence ratio <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks that carry both cards, from all the decks that carry any of these cards. 100% means they always appear together in a deck. 0% that they never appear together in a deck."></i></th><th></th></tr></thead>
 {% for card_code, card in cards.items() %}
 <tr>   
       <td>
@@ -115,9 +124,10 @@
       <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp'] + ')' if card['xp']!='' else ''}}</td></a>
+      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} </td></a>
     
-    <td>{{ card['type_code'] }}</td>
+    <td> {{ card['xp'] if card['xp']!='' else '0'}}</td>
+    <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>
     <td>{{ '%d'|format(card['Occurrences']) }}</td>
     <td>{{ '%d'|format(card['Cooccurrences']) }}</td>
@@ -131,7 +141,7 @@
       responsive: true,
       autoWidth: false,
       iDisplayLength: 10, 
-      order: [[5, 'desc']],
+      order: [[6, 'desc']],
       columnDefs: [{
         targets: 0, render: function(data, type, row, meta) {
           
@@ -150,7 +160,7 @@
 {% macro generate_inv_card_table(investigators) -%}
 <table class="table table-hover" id="inv-card-cooc-table">
   <thead>
-  <tr><th>Investigator</th><th>Faction</th><th>Number of decks</th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
+  <tr><th>Investigator</th><th>Faction</th><th>Number of decks <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Number of decks this investigator appear."></i></th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
 {% for card_code, investigator in investigators.items() %}
 <tr>   
       <td>
@@ -160,7 +170,7 @@
   
       <a href="{{url_for('investigator.view',investigator_id= investigator['code_str'])}}" class="{{ investigator['faction_code'] }}">{{ card_code }}</td></a>
     
-    <td>{{ investigator['faction_code'] }}</td>
+    <td>{{ investigator['faction_code']|capitalize }}</td>
     <td>{{ investigator['number_of_decks'] }}</td>
     <td>{{ investigator['Coocurrence'] }}</td>
     <td><a href="https://arkhamdb.com/card/{{ investigator['code_str'] }}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
@@ -191,7 +201,7 @@
 {% macro generate_card_inv_table(cards) -%}
 <table class="table table-hover" id="card-investigator-table">
   <thead>
-  <tr><th>Card</th><th>Type</th><th>Slot</th><th>Presence</th><th>Occurrence</th><th>Synergy <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Presence - occurrence. Positive synergy means the card appears more often in the investigator than in general."></i></th><th></th></tr></thead>
+  <tr><th>Card</th><th>Level</th><th>Type</th><th>Slot</th><th>Presence</th><th>Occurrence</th><th>Synergy <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Presence - occurrence. Positive synergy means the card appears more often in the investigator than in general."></i></th><th></th></tr></thead>
 {% for card_code, card in cards.items() %}
 <tr>   
       <td>
@@ -205,8 +215,9 @@
       <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp_text'] + ')' if card['xp_text']!='' else ''}}</td></a>
+      <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }}</td></a>
     
+    <td>{{ card['xp_text'] if card['xp_text']!='' else '0'}}</td>
     <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>
     <td>{{ '%d%%'|format(100*card['inv_occurrence']) }}</td>
@@ -221,7 +232,7 @@
       responsive: true,
       autoWidth: false,
       iDisplayLength: 10, 
-      order: [[5, 'desc']],
+      order: [[6, 'desc']],
       columnDefs: [{
         targets: 0, render: function(data, type, row, meta) {
           
