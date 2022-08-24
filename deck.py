@@ -183,17 +183,22 @@ def view(deck_id):
         'inv_skill_wild': inv_skill_wild
         }
 
+
+    
     deck = pd.DataFrame.from_dict(
         deck_to_compare.loc[:,'slots'][0], orient='index', columns=['count']).join(
-            card_cycles[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp']].set_index('code_str')).join(
+            card_cycles[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp', 'myriad']].set_index('code_str')).join(
                 inv_exclusion_recs[['Coocurrence']]).join(
                     exclusion_recs[['Jaccard Score']])
-    
+
+    print(deck)
     deck_info =deck_to_compare[['investigator_name', 'investigator_code', 'name', 'taboo_id', 'date_creation', 'date_update', 'xp']].to_dict(orient='index')[0]
     deck_info['investigator_code'] = str(deck_info['investigator_code']).zfill(5)
     deck_info['date_creation'] = deck_info['date_creation'][0:10]
     deck_info['date_update'] = deck_info['date_update'][0:10]
     deck['total_xp'] = deck['xp'] * deck['count']
+    deck.loc[deck['myriad']==1, 'total_xp'] = deck.loc[deck['myriad']==1,'xp']
+    # deck[deck['myriad']==1] = deck[deck['myriad']==1]['xp']
     deck_info['xp'] = "{:0.0f}".format(deck['total_xp'].sum())
     deck_info['total_cards'] = deck['count'].sum()
     deck_info['inv_deck_count'] = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]].count()[0]

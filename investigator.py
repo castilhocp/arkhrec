@@ -409,6 +409,7 @@ def view(investigator_id):
         while True:
             card_pool_xp.loc[:, 'cumsum_deck_limit'] = card_pool_xp['deck_limit'].cumsum()
             card_pool_xp.loc[:, 'total_xp'] = card_pool_xp['deck_limit'] * card_pool_xp['xp']
+            card_pool_xp.loc[card_pool_xp['myriad']==1, 'total_xp'] = card_pool_xp.loc[card_pool_xp['myriad']==1,'xp']
             card_pool_xp.loc[:, 'cumsum_xp'] = card_pool_xp['total_xp'].cumsum()
             if card_pool_xp.head(1)['xp'][0] > xp_to_include:
                 card_pool_xp = card_pool_xp.drop(card_pool_xp.head(1).index)
