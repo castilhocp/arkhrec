@@ -1,8 +1,13 @@
 PACKS_WITHOUT_PLAYER_CARDS = ['tsk', 'promotional', 'parallel', 'side_stories']
 
 gCycles=dict()
+# gDecks=dict()
+# gCards=dict()
 
 def convert_text_to_icons(text):
+    if text:
+        return ''
+
     import re
 
     rep = {

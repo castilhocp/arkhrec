@@ -112,7 +112,7 @@
     <th>Type</th>
     <th>Slot</th>
     <th>Occurrence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Number of decks this card appear."></i></th>
-    <th>Cooc. <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Number of decks this card appear with {{cards[selected_card_id]['name']}} {{ '('+cards[selected_card_id]['xp']+')' if cards[selected_card_id]['xp']!='' else ''}}."></i></th>
+    <th>Cooc. <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Number of decks this card appear with {{cards[selected_card_id]['name']}} {{ '('+cards[selected_card_id]['xp_text']+')' if cards[selected_card_id]['xp_text']!='' else ''}}."></i></th>
     <th>Cooc. ratio <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks that carry both cards, from all the decks that carry any of these cards. 100% means they always appear together in a deck. 0% that they never appear together in a deck."></i></th><th></th></tr></thead>
 {% for card_code, card in cards.items() %}
 <tr>   
@@ -129,7 +129,7 @@
   
       <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} </td></a>
     
-    <td> {{ card['xp'] if card['xp']!='' else '0'}}</td>
+    <td> {{ card['xp_text'] if card['xp_text']!='' else '0'}}</td>
     <td>{{ card['cycle'] }}</td>
     <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>

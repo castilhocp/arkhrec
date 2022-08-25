@@ -32,13 +32,13 @@ Search card
                 <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
                 {% endif %}
             
-                <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp'] + ')' if card['xp']!='' else ''}}</td></a>
+                <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp_text'] + ')' if card['xp_text']!='' else ''}}</td></a>
             
                 <td>{{ card['cycle'] }}</td>
                 <td>{{ card['type_code']|capitalize }}</td>
                 <td>{{ card['slot'] }}</td>
                 <td>{{ card['color']|capitalize }}</td>
-                <td>{{ '%d'|format(card['Uses']) }}</td>
+                <td>{{ '%d'|format(card['Occurrences']) }}</td>
                 <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
             </tr>
             {% endfor %}

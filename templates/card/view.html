@@ -4,7 +4,7 @@
 {% from 'datatables.html' import generate_inv_card_table %}
 
 {% block title %}
-{{ card_info[card_id]['name'] }} {{ '(' + card_info[card_id]['xp'] + ')' if card_info[card_id]['xp']!='' else ''}}
+{{ card_info[card_id]['name'] }} {{ '(' + card_info[card_id]['xp_text'] + ')' if card_info[card_id]['xp_text']!='' else ''}}
 {% endblock %}
 
 {% block header %}
