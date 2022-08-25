@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% set active_page = 'card' %}
-{% from 'macros.html' import generate_card_table %}
-{% from 'macros.html' import generate_inv_card_table %}
+{% from 'datatables.html' import generate_card_table %}
+{% from 'datatables.html' import generate_inv_card_table %}
 
 {% block title %}
 {{ card_info[card_id]['name'] }} {{ '(' + card_info[card_id]['xp'] + ')' if card_info[card_id]['xp']!='' else ''}}
@@ -11,7 +11,9 @@
 
 {% endblock %}
 
+
 {% block content %}
+{% include 'collection.html' %}
 <div class="container-fluid mt-2">
     
     <div class="card">

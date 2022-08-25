@@ -1,3 +1,7 @@
+PACKS_WITHOUT_PLAYER_CARDS = ['tsk', 'promotional', 'parallel', 'side_stories']
+
+gCycles=dict()
+
 def convert_text_to_icons(text):
     import re
 
@@ -43,3 +47,43 @@ def convert_text_to_icons(text):
     pattern = re.compile("|".join(rep.keys()))
     text = pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
     return text
+
+def set_cycle(row):
+    return {
+        "01": "C",
+        "02": "TDL",
+        "03": "PtC",
+        "04": "TFA",
+        "05": "TCU",
+        "06": "TDE",
+        "07": "IC",
+        "08": "EotE",
+        "09": "TSK",
+        "51": "RNotZ",
+        "52": "RtDL",
+        "53": "RtPtC",
+        "54": "RtFA",
+        "55": "RtCU",
+        "60": "St.",
+        "90": "||",
+        "98": "Promo"
+    }.get(row.name[:2],"other")
+
+def get_collection():
+    from flask import session
+
+    if 'card_collection' in session:
+        return session['card_collection']
+        
+    card_collection = dict()
+    # print(gCycles)
+    for cycle in gCycles:
+        
+
+        if gCycles[cycle]['code'] in PACKS_WITHOUT_PLAYER_CARDS:
+            continue
+        for pack in gCycles[cycle]['packs']:
+            card_collection[pack['code']] = True
+
+    session['card_collection'] = card_collection
+    return session['card_collection']

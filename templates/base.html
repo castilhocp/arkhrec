@@ -41,6 +41,8 @@
     </div>
   </div>
 </nav>
+
+
 <section class="content">
   <header>
     {% block header %}{% endblock %}
@@ -49,13 +51,23 @@
     <div class="flash alert alert-danger">{{ message }}</div>
   {% endfor %}
   {% block content %}{% endblock %}
-  <script>
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-      })
-      </script>
 </section>
+
+<script type="text/javascript">
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+
+<script type="text/javascript">
+  const navLinks = document.querySelectorAll('.nav-item')
+  const menuToggle = document.getElementById('navbarSupportedContent')
+  const bsCollapse = new bootstrap.Collapse(menuToggle, {toggle:false})
+  navLinks.forEach((l) => {
+      l.addEventListener('click', () => { bsCollapse.toggle() })
+  })
+</script>
 
 <footer class="container" style="font-size:small">
   <br><hr>

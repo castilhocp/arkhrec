@@ -18,7 +18,7 @@ Search card
 
         <table class="table table-hover" id="cards-table">
             <thead>
-            <tr><th>Card</th><th>Type</th><th>Slot</th><th>Faction</th><th># of decks</th><th></th></tr></thead>
+            <tr><th>Card</th><th>Cycle</th><th>Type</th><th>Slot</th><th>Faction</th><th># of decks</th><th></th></tr></thead>
             {% for card_code, card in cards.items() %}
             <tr>   
                 <td>
@@ -34,6 +34,7 @@ Search card
             
                 <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp'] + ')' if card['xp']!='' else ''}}</td></a>
             
+                <td>{{ card['cycle'] }}</td>
                 <td>{{ card['type_code']|capitalize }}</td>
                 <td>{{ card['slot'] }}</td>
                 <td>{{ card['color']|capitalize }}</td>
@@ -47,7 +48,7 @@ Search card
             responsive: true,
             autoWidth: false,
             iDisplayLength: 100, 
-            order: [[4, 'desc']],
+            order: [[5, 'desc']],
             columnDefs: [{
             targets: 0, render: function(data, type, row, meta) {
                 
@@ -58,7 +59,7 @@ Search card
             }
             },
             {
-                targets: 4, width: "10%"
+                targets: 6, width: "10%", orderable: false
             }]
         });
         </script>

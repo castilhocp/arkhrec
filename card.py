@@ -1,4 +1,5 @@
 from flask import current_app
+from flask import session
 import os
 import arkhrec.helpers
 
@@ -7,6 +8,8 @@ from flask import (
 )
 
 bp = Blueprint('card', __name__, url_prefix='/card')
+
+import numpy as np
 
 @bp.route('/', methods=['GET', 'POST'])
 def search():
@@ -34,14 +37,20 @@ def search():
     card_cycles_clean = card_cycles_clean.fillna("-")
     card_cycles_clean = card_cycles_clean.drop('01000')
     
-    
+    card_cycles_clean['cycle'] = card_cycles_clean.apply(arkhrec.helpers.set_cycle, axis=1)
     
     return render_template('card/search.html', cards=card_cycles_clean.to_dict(orient='index'),num_of_decks=num_of_decks)
 
 @bp.route('/<card_id>', methods=['GET'])
 def view(card_id):
+    card_collection = arkhrec.helpers.get_collection()
+
     import pandas as pd
     card_cycles = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_cycles.pickle'))
+    card_cycles.loc[:,'unique_code'] = card_cycles.loc[:, 'code_str']
+    card_cycles.loc[~card_cycles['duplicate_of'].isna(), 'unique_code'] = card_cycles.loc[~card_cycles['duplicate_of'].isna(), 'duplicate_of'].astype(int).astype(str).apply(str.zfill, args=[5])
+    card_collection_codes = card_cycles[card_cycles['pack_code'].isin(card_collection.keys())]['unique_code'].unique()
+
     card_jaccard_score = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_jaccard_score.pickle'))
     inv_cooc_ratio = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'inv_cooc_ratio.pickle'))
     card_frequencies_clean = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_frequencies_clean.pickle'))
@@ -89,9 +98,19 @@ def view(card_id):
 
     card_cycles_clean.loc[:,'text_icons'] = card_cycles_clean['text'].apply(arkhrec.helpers.convert_text_to_icons)
     
+    card_cycles_clean['cycle'] = card_cycles_clean.apply(arkhrec.helpers.set_cycle, axis=1)
+    card_collection_codes = np.append(card_collection_codes, card_id)
+    card_cycles_clean = card_cycles_clean.loc[card_cycles_clean.index.intersection(card_collection_codes)]
+    selected_card_inv_cooc.index.name = 'investigator_name'
+    selected_card_inv_cooc = selected_card_inv_cooc.reset_index().set_index('code_str')
+    selected_card_inv_cooc['cycle'] = selected_card_inv_cooc.apply(arkhrec.helpers.set_cycle, axis=1)
+    selected_card_inv_cooc = selected_card_inv_cooc.reset_index().set_index('investigator_name')
+
+
 
     return render_template('card/view.html', card_id=card_id, card_info=card_cycles_clean.to_dict(orient='index'), investigators=selected_card_inv_cooc.to_dict(orient='index'), num_of_decks=num_of_decks, num_of_cards=num_of_cards)
 
 def convert_xp_to_str(cards):
     cards.loc[:,'xp'] = cards.loc[:,'xp'].to_frame().applymap(lambda x: "{:0.0f}".format(x) if x>0 else '')
     return cards
+

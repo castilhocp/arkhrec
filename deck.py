@@ -10,6 +10,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 bp = Blueprint('deck', __name__, url_prefix='/deck')
 
 import arkhrec.investigator
+import arkhrec.helpers
 
 @bp.route('/', methods=['GET', 'POST'])
 def search():
@@ -36,11 +37,17 @@ def view(deck_id):
     if (not status_code.ok) or (status_code.headers['Content-Type'] != 'application/json'):
         flash('Failed to fetch deck data from ArkhamDB')
         return redirect(url_for('deck.search'))
+    
+    card_collection = arkhrec.helpers.get_collection()
 
     # Read the deck from ArkhamDB's response
     deck_to_compare = pd.read_json("["+status_code.text+"]", orient='records')
     
     card_cycles = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_cycles.pickle'))
+    card_cycles.loc[:,'unique_code'] = card_cycles.loc[:, 'code_str']
+    card_cycles.loc[~card_cycles['duplicate_of'].isna(), 'unique_code'] = card_cycles.loc[~card_cycles['duplicate_of'].isna(), 'duplicate_of'].astype(int).astype(str).apply(str.zfill, args=[5])
+    card_collection_codes = card_cycles[card_cycles['pack_code'].isin(card_collection.keys())]['unique_code'].unique()
+
 
     duplicates = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'duplicates.pickle'))
     card_jaccard_score = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_jaccard_score.pickle'))
@@ -182,8 +189,6 @@ def view(deck_id):
         'inv_skill_intellect': inv_skill_intellect,
         'inv_skill_wild': inv_skill_wild
         }
-
-
     
     deck = pd.DataFrame.from_dict(
         deck_to_compare.loc[:,'slots'][0], orient='index', columns=['count']).join(
@@ -213,9 +218,13 @@ def view(deck_id):
     inclusion_recs.loc[inclusion_recs['faction2_code'].notna(),'color']='multi'
     inclusion_recs = convert_xp_to_str(inclusion_recs)
     inclusion_recs = inclusion_recs.fillna("-")
+    inclusion_recs['cycle'] = inclusion_recs.apply(arkhrec.helpers.set_cycle, axis=1)
+    inclusion_recs = inclusion_recs.loc[inclusion_recs.index.intersection(card_collection_codes)]
+    deck['cycle'] = deck.apply(arkhrec.helpers.set_cycle, axis=1)
 
     return render_template('deck/view.html', deck=deck.to_dict('index'), inclusion_recs=inclusion_recs.to_dict('index'), deck_statistics=deck_statistics, deck_info=deck_info)
 
 def convert_xp_to_str(deck):
     deck.loc[:,'xp'] = deck.loc[:,'xp'].to_frame().applymap(lambda x: "{:0.0f}".format(x) if x>0 else '')
     return deck
+

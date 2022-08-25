@@ -38,28 +38,30 @@ def search():
     number_of_decks_per_investigator = all_decks_clean.groupby('investigator_name').count()['id'].to_frame()
     number_of_decks_per_investigator.columns = ['number_of_decks']
     investigators = investigators.join(number_of_decks_per_investigator)
-
-    
-    
     
     investigators['color'] = investigators['faction_code']
     investigators.loc[investigators['faction2_code'].notna(),'color']='multi'
     investigators = investigators.fillna("-")
     investigators = investigators[investigators['number_of_decks']!='-']
     investigators = investigators.reset_index().set_index('code_str')
-    
-    
+      
     return render_template('investigator/search.html', investigators=investigators.to_dict(orient='index'),num_of_decks=num_of_decks)
 
 @bp.route('/<investigator_id>', methods=['GET'])
 def view(investigator_id):
     import pandas as pd
 
+    card_collection = arkhrec.helpers.get_collection()
+
     #################################################################
     # Reads files
     #################################################################
 
     card_cycles = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_cycles.pickle'))
+    card_cycles.loc[:,'unique_code'] = card_cycles.loc[:, 'code_str']
+    card_cycles.loc[~card_cycles['duplicate_of'].isna(), 'unique_code'] = card_cycles.loc[~card_cycles['duplicate_of'].isna(), 'duplicate_of'].astype(int).astype(str).apply(str.zfill, args=[5])
+    card_collection_codes = card_cycles[card_cycles['pack_code'].isin(card_collection.keys())]['unique_code'].unique()
+
     all_decks_clean = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'all_decks_clean.pickle')) 
     inv_cooc_ratio = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'inv_cooc_ratio.pickle'))
     card_frequencies_clean = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_frequencies_clean.pickle'))   
@@ -344,6 +346,7 @@ def view(investigator_id):
     skills_to_include = deck_size - assets_to_include - events_to_include
 
     card_cycles_pool = card_cycles_clean.drop(card_reqs.set_index('code_str').index, errors='ignore')
+    card_cycles_pool = card_cycles_pool.loc[card_cycles_pool.index.intersection(card_collection_codes)]
     card_cycles_pool.loc[:,'xp'] = pd.to_numeric(card_cycles_pool['xp'], errors='coerce')
   
     card_pool = cards_valid_for_investigator(card_cycles_pool, inv_card_deck.deck_options, max_faction_selected, [max_faction_1, max_faction_2])
@@ -378,6 +381,8 @@ def view(investigator_id):
 
     while final_deck_size < deck_size:
         new_card_pool = card_pool.drop(average_deck.index, errors='ignore').sort_values(['inv_occurrence','synergy'], ascending=False)
+        if new_card_pool.empty:
+            break
         
         new_card_pool.loc[:,'cumsum_deck_limit'] = new_card_pool['deck_limit'].cumsum()
         next_card_to_include = new_card_pool.head(1)
@@ -407,6 +412,8 @@ def view(investigator_id):
         xp_to_include = total_xp_to_include
         # Get xp cards to include
         while True:
+            if card_pool_xp.empty:
+                break
             card_pool_xp.loc[:, 'cumsum_deck_limit'] = card_pool_xp['deck_limit'].cumsum()
             card_pool_xp.loc[:, 'total_xp'] = card_pool_xp['deck_limit'] * card_pool_xp['xp']
             card_pool_xp.loc[card_pool_xp['myriad']==1, 'total_xp'] = card_pool_xp.loc[card_pool_xp['myriad']==1,'xp']
@@ -432,28 +439,29 @@ def view(investigator_id):
             xp_to_include = total_xp_to_include - included_xp
             if xp_to_include <= 0:
                 break
-        # Exclude least similar 0xp cards
-        number_of_cards_to_include = xp_cards_to_include['amount'].sum()
-        average_deck = average_deck.sort_values('inv_occurrence')
-        average_deck.loc[:,"cumsum_amount"] = average_deck['amount'].cumsum()
-        
-        number_of_cards_to_exclude = number_of_cards_to_include
-        while True:
-            if average_deck.head(1)['cumsum_amount'][0] > number_of_cards_to_exclude:
-                
-                
-                average_deck.at[average_deck.head(1).index[0], 'amount'] = average_deck.head(1)['amount']-number_of_cards_to_exclude
-                
-                
-            else:
-                
-                average_deck = average_deck[average_deck['cumsum_amount']>number_of_cards_to_exclude]
-                
-            number_of_cards_to_exclude = average_deck['amount'].sum()+number_of_cards_to_include-deck_size
+        if not xp_cards_to_include.empty:
+            # Exclude least similar 0xp cards
+            number_of_cards_to_include = xp_cards_to_include['amount'].sum()
+            average_deck = average_deck.sort_values('inv_occurrence')
+            average_deck.loc[:,"cumsum_amount"] = average_deck['amount'].cumsum()
             
-            if average_deck['amount'].sum() <= deck_size - number_of_cards_to_include:
-                break
-        average_deck = average_deck.append(xp_cards_to_include)
+            number_of_cards_to_exclude = number_of_cards_to_include
+            while True:
+                if average_deck.head(1)['cumsum_amount'][0] > number_of_cards_to_exclude:
+                    
+                    
+                    average_deck.at[average_deck.head(1).index[0], 'amount'] = average_deck.head(1)['amount']-number_of_cards_to_exclude
+                    
+                    
+                else:
+                    
+                    average_deck = average_deck[average_deck['cumsum_amount']>number_of_cards_to_exclude]
+                    
+                number_of_cards_to_exclude = average_deck['amount'].sum()+number_of_cards_to_include-deck_size
+                
+                if average_deck['amount'].sum() <= deck_size - number_of_cards_to_include:
+                    break
+            average_deck = average_deck.append(xp_cards_to_include)
 
 
 
@@ -467,6 +475,11 @@ def view(investigator_id):
 
     print("\n\n\n\n\nAVERAGE DECK")
     print(average_deck)
+
+    card_cycles_clean['cycle'] = card_cycles_clean.apply(arkhrec.helpers.set_cycle, axis=1)
+    print(card_reqs.set_index('code_str'))
+    card_cycles_clean = card_cycles_clean.drop(card_reqs['code_str'], errors='ignore')
+    card_cycles_clean = card_cycles_clean.loc[card_cycles_clean.index.intersection(card_collection_codes)]
     
     return render_template('investigator/view.html', investigator_info=investigator.to_dict(orient='index'), investigator_id=investigator_id, card_info=card_cycles_clean.to_dict(orient='index'), num_of_decks=num_of_decks, num_of_investigators=num_of_investigators, deck_statistics=deck_statistics, average_deck = average_deck.to_dict(orient='index'), average_deck_size = average_deck['amount'].sum(), average_deck_xp = average_deck['total_xp'].sum())
 

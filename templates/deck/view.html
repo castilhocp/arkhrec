@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% set active_page = 'deck' %}
-{% from 'macros.html' import generate_deck_table %}
-{% from 'macros.html' import generate_inv_rec_table %}
-{% from 'macros.html' import generate_rec_table %}
+{% from 'datatables.html' import generate_deck_table %}
+{% from 'datatables.html' import generate_inv_rec_table %}
+{% from 'datatables.html' import generate_rec_table %}
 
 {% block title %}
 {{deck_info['investigator_name']}}
@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block content %}
+{% include 'collection.html' %}
   <div class="container-fluid mt-2">
     
    <div class="card">

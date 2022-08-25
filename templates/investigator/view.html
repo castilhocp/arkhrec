@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% set active_page = 'investigator' %}
-{% from 'macros.html' import generate_card_inv_table %}
+{% from 'datatables.html' import generate_card_inv_table %}
 
 {% block title %}
 {{ investigator_info[investigator_id]['name'] }}
@@ -11,6 +11,7 @@
 {% endblock %}
 
 {% block content %}
+{% include 'collection.html' %}
 <div class="container-fluid mt-2">
     
     <div class="card">

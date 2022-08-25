@@ -1,0 +1,55 @@
+<section class="collection">
+    <div class="row">
+        <div class="col">
+            <p class="float-end">
+            <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCollection" aria-expanded="false" aria-controls="collapseExample">
+                Filter by pack & cycle
+            </button>
+            </p>
+        </div>
+    </div>
+    <div class="collapse" id="collapseCollection">
+      <div class="card card-body">
+        <form class="row" action="{{url_for('card_collection.update')}}" method="POST">
+            <div class="row m-2">
+                <button type="submit" class="btn btn-primary">Update filter</button>
+            </div>
+            <div class="row">
+            {% for cycle in cycles%}
+                <div class="col-md-3 col-sm-4 cycle">
+                    <div class="row">
+                        <div class="col">{{cycles[cycle]['name']}}</div>
+                        <div class="col">
+                            <div class="float-end">
+                                <a class="select-all" title="Select All" data-toggle="tooltip"data-container="body"><span class="fa fa-check"></span></a>
+                                &#160;&#160;&#160;
+                                <a class="select-none" title="Select None" data-toggle="tooltip" data-container="body"><span class="fa fa-times"></span></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="btn-group-vertical" role="group">
+                            {% for pack in cycles[cycle]['packs'] %}
+                                <input type="checkbox" class="btn-check" id="checkbox-collection-{{pack['code']}}" name="{{pack['code']}}" value="True" autocomplete="off" {{ 'checked' if session['card_collection'][pack['code']] else '' }}>
+                                <label class="btn btn-outline-secondary" for="checkbox-collection-{{pack['code']}}">{{pack['name']}}</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %} 
+            </div>
+        </form>
+
+      </div>
+    </div>
+    <script type="text/javascript">
+        $("#collapseCollection").on('click', '.select-all', function(e){
+            var cycle = $(this).closest('.cycle');
+            cycle.find('.btn-check').prop('checked', true);
+        })
+        .on('click', '.select-none', function() {
+            var cycle = $(this).closest('.cycle');
+            cycle.find('.btn-check').prop('checked', false);
+        });
+    </script>
+  </section>
