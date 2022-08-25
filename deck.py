@@ -103,7 +103,7 @@ def view(deck_id):
     print(inv_card_deck.deck_options)
     print(fs)
     print(ms)
-    allowed_card_pool = arkhrec.investigator.cards_valid_for_investigator(card_cycles, inv_card_deck.deck_options, single_faction_selected=fs, multi_faction_selected=ms).set_index('code_str')
+    allowed_card_pool = arkhrec.investigator.cards_valid_for_investigator(card_cycles, inv_card_deck.deck_options, single_faction_selected=fs, multi_faction_selected=ms, apply_limits=False).set_index('code_str')
 
     print(inclusion_recs)
     inclusion_recs = inclusion_recs.loc[inclusion_recs.index & allowed_card_pool.index]

@@ -12,8 +12,7 @@ import arkhrec.helpers
 @bp.route('/update', methods=['POST'])
 def update():
     card_collection = dict()
-    print("\n\n\nHANDLING POST", flush=True)
-    print(request.form.listvalues())
+    
     for k,v in request.form.items():
         card_collection[k] = v
     

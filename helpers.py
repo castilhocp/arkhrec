@@ -74,7 +74,7 @@ def get_collection():
 
     if 'card_collection' in session:
         return session['card_collection']
-        
+
     card_collection = dict()
     # print(gCycles)
     for cycle in gCycles:

@@ -487,7 +487,7 @@ def convert_xp_to_str(cards):
     cards.loc[:,'xp_text'] = cards.loc[:,'xp_text'].to_frame().applymap(lambda x: "{:0.0f}".format(x) if x>0 else '')
     return cards
 
-def cards_valid_for_investigator(card_cycles_pool, deck_options, single_faction_selected='', multi_faction_selected=[]):
+def cards_valid_for_investigator(card_cycles_pool, deck_options, single_faction_selected='', multi_faction_selected=[], apply_limits=True):
     import pandas as pd
 
     card_pools=[]
@@ -496,40 +496,54 @@ def cards_valid_for_investigator(card_cycles_pool, deck_options, single_faction_
                 restriction_pool = card_cycles_pool[(card_cycles_pool['faction_code'].isin(do['faction'])) & (card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1)))]
                 card_pools.append(restriction_pool)
                 # Dunwich splash
+                
                 main_factions = do['faction']
+
         elif 'faction' in do and 'level' in do and 'limit' in do:
-            restriction_pool = card_cycles_pool[(card_cycles_pool['faction_code'].isin(do['faction'])) & card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1))].sort_values('inv_occurrence', ascending=False).head(do['limit'])
+            restriction_pool = card_cycles_pool[(card_cycles_pool['faction_code'].isin(do['faction'])) & card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1))]
+            if apply_limits:
+                restriction_pool = restriction_pool.sort_values('inv_occurrence', ascending=False).head(do['limit'])    
+            card_pools.append(restriction_pool)
             # filter_limits.append({'factions': do['faction'], 'level': do['level'], 'limit': do['limit']})
         elif 'level' in do and 'faction' not in do and 'limit' in do:
             factions = ['guardian', 'mystic', 'seeker', 'rogue', 'survivor', 'neutral']
             filter_classes = factions
-            
+
             for f in main_factions:
+
                 filter_classes.remove(f)
+
             
-            
-            restriction_pool = card_cycles_pool[((card_cycles_pool['faction_code'].isin(filter_classes)) | (card_cycles_pool['faction2_code'].isin(filter_classes)) | (card_cycles_pool['faction3_code'].isin(filter_classes)) ) & card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1))].sort_values('inv_occurrence', ascending=False).head(do['limit'])
-            
-            # filter_limits.append({'factions': filter_classes, 'level': do['level'], 'limit': do['limit']})  
+
+            restriction_pool = card_cycles_pool[((card_cycles_pool['faction_code'].isin(filter_classes)) | (card_cycles_pool['faction2_code'].isin(filter_classes)) | (card_cycles_pool['faction3_code'].isin(filter_classes)) ) & card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1))]
+
+            if apply_limits:
+                restriction_pool = restriction_pool.sort_values('inv_occurrence', ascending=False).head(do['limit'])
+            card_pools.append(restriction_pool)
+
         elif 'name' in do:
             if do['name'] == 'Secondary Class':
                 restriction_pool = card_cycles_pool[((card_cycles_pool['faction_code'] == single_faction_selected)| (card_cycles_pool['faction2_code'] == single_faction_selected) | (card_cycles_pool['faction3_code'] == single_faction_selected) ) & (card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1))) & (card_cycles_pool['type_code'].isin(do['type']))]
                 if 'limit' in do and 'type' in do:
-                    restriction_pool = restriction_pool[restriction_pool["type_code"]==do['type']].sort_values('inv_occurrence', ascending=False).head(do['limit'])
-                    # filter_limits.append({'factions': do['faction'], 'level': do['level'], 'type': do['type'], 'limit': do['limit']})
+                    restriction_pool = restriction_pool[restriction_pool["type_code"]==do['type']]
+                    if(apply_limits):
+                        restriction_pool = restriction_pool.sort_values('inv_occurrence', ascending=False).head(do['limit'])
+
                 elif 'limit' in do and 'type' not in do:
-                    restriction_pool = restriction_pool.sort_values('inv_occurrence', ascending=False).head()
-                    # filter_limits.append({'factions': do['faction'], 'level': do['level'], 'limit': do['limit']})
+                    if(apply_limits):
+                        restriction_pool = restriction_pool.sort_values('inv_occurrence', ascending=False).head()
+
                 card_pools.append(restriction_pool)
             elif do['name'] == "Class Choice":
                 if do['id'] == 'faction_1':
                     restriction_pool = card_cycles_pool[((card_cycles_pool['faction_code'] == multi_faction_selected[0]) | (card_cycles_pool['faction2_code'] == multi_faction_selected[0]) | (card_cycles_pool['faction3_code'] == multi_faction_selected[0]) ) & (card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1)))]
 
-                    card_pools.append(restriction_pool)
+                    
                 elif do['id'] == 'faction_2':
                     
                     restriction_pool = card_cycles_pool[((card_cycles_pool['faction_code'] == multi_faction_selected[1]) | (card_cycles_pool['faction2_code'] == multi_faction_selected[1]) | (card_cycles_pool['faction3_code'] == multi_faction_selected[1]) )& (card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1)))]
-                    card_pools.append(restriction_pool)
+                    
+                card_pools.append(restriction_pool)
 
 
     card_pool = pd.concat(card_pools)

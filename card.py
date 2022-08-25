@@ -24,16 +24,19 @@ def search():
     card_frequencies_clean = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_frequencies_clean.pickle'))
     card_cooc = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_cooc.pickle'))
     all_decks_clean = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'all_decks_clean.pickle'))
-    num_of_decks = len(all_decks_clean)
-    tuples = list(zip(card_cooc.index, card_cooc.index))
-    card_cooc_stacked = card_cooc.stack()[tuples]
 
+    num_of_decks = len(all_decks_clean)
     card_cycles_clean = card_cycles.set_index('code_str')
     card_cycles_clean = card_cycles_clean.merge(card_frequencies_clean, left_index=True, right_index=True)
-    card_cycles_clean = convert_xp_to_str(card_cycles_clean)
-    card_cycles_clean['color'] = card_cycles_clean['faction_code']
-    card_cycles_clean.loc[card_cycles_clean['faction2_code'].notna(),'color']='multi'
+    print(card_cycles_clean)
+
+    
+    tuples = list(zip(card_cooc.index, card_cooc.index))
+    card_cooc_stacked = card_cooc.stack()[tuples]
     card_cycles_clean = card_cycles_clean.join(card_cooc_stacked.to_frame('Uses').reset_index(level=[0]))
+    print(card_cycles_clean.loc['01088'])
+    card_cycles_clean = convert_xp_to_str(card_cycles_clean)
+    card_cycles_clean = set_color(card_cycles_clean)
     card_cycles_clean = card_cycles_clean.fillna("-")
     card_cycles_clean = card_cycles_clean.drop('01000')
     
@@ -112,5 +115,10 @@ def view(card_id):
 
 def convert_xp_to_str(cards):
     cards.loc[:,'xp'] = cards.loc[:,'xp'].to_frame().applymap(lambda x: "{:0.0f}".format(x) if x>0 else '')
+    return cards
+
+def set_color(cards):
+    cards['color'] = cards['faction_code']
+    cards.loc[cards['faction2_code'].notna(),'color']='multi'
     return cards
 
