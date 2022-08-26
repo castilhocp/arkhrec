@@ -1,13 +1,4 @@
-PACKS_WITHOUT_PLAYER_CARDS = ['tsk', 'promotional', 'parallel', 'side_stories']
-
-gCycles=dict()
-# gDecks=dict()
-# gCards=dict()
-
 def convert_text_to_icons(text):
-    if text:
-        return ''
-
     import re
 
     rep = {
@@ -74,21 +65,11 @@ def set_cycle(row):
         "98": "Promo"
     }.get(row.name[:2],"other")
 
-def get_collection():
-    from flask import session
+def set_color(cards):
+    cards['color'] = cards['faction_code']
+    cards.loc[cards['faction2_code'].notna(),'color']='multi'
+    return cards
 
-    if 'card_collection' in session:
-        return session['card_collection']
-
-    card_collection = dict()
-    # print(gCycles)
-    for cycle in gCycles:
-        
-
-        if gCycles[cycle]['code'] in PACKS_WITHOUT_PLAYER_CARDS:
-            continue
-        for pack in gCycles[cycle]['packs']:
-            card_collection[pack['code']] = True
-
-    session['card_collection'] = card_collection
-    return session['card_collection']
+def convert_xp_to_str(cards):
+    cards.loc[:,'xp_text'] = cards.loc[:,'xp'].to_frame().applymap(lambda x: "{:0.0f}".format(x) if x>0 else '')
+    return cards

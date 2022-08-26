@@ -7,7 +7,7 @@ from flask import (
 
 bp = Blueprint('card_collection', __name__, url_prefix='/collection')
 
-import arkhrec.helpers
+import arkhrec.general_helpers
 
 @bp.route('/update', methods=['POST'])
 def update():

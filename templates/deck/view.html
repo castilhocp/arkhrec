@@ -48,7 +48,7 @@
           </div>
           <div class="card-body">
             <div class="table-responsive">
-                  {{ generate_deck_table(deck) }}
+                  {{ generate_deck_table(cards_in_deck) }}
             </div>
           </div>
         </div>        
@@ -61,7 +61,7 @@
           </div>
           <div class="card-body">
             <div class="table-responsive">
-              {{ generate_rec_table(inclusion_recs) }}
+              {{ generate_rec_table(cards_not_in_deck) }}
             </div>
           </div>
         </div>

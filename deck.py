@@ -9,8 +9,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 bp = Blueprint('deck', __name__, url_prefix='/deck')
 
-import arkhrec.investigator
-import arkhrec.helpers
+import arkhrec.deck_builder
+import arkhrec.general_helpers
+import arkhrec.data_helpers
 
 @bp.route('/', methods=['GET', 'POST'])
 def search():
@@ -24,7 +25,6 @@ def view(deck_id):
     
     import requests
     import pandas as pd
-    
 
     # Read deck from ArkhamDB
     # deck_id = '2103914'
@@ -38,193 +38,13 @@ def view(deck_id):
         flash('Failed to fetch deck data from ArkhamDB')
         return redirect(url_for('deck.search'))
     
-    card_collection = arkhrec.helpers.get_collection()
-
     # Read the deck from ArkhamDB's response
     deck_to_compare = pd.read_json("["+status_code.text+"]", orient='records')
-    
-    card_cycles = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_cycles.pickle'))
-    card_cycles.loc[:,'unique_code'] = card_cycles.loc[:, 'code_str']
-    card_cycles.loc[~card_cycles['duplicate_of'].isna(), 'unique_code'] = card_cycles.loc[~card_cycles['duplicate_of'].isna(), 'duplicate_of'].astype(int).astype(str).apply(str.zfill, args=[5])
-    card_collection_codes = card_cycles[card_cycles['pack_code'].isin(card_collection.keys())]['unique_code'].unique()
 
+    # Remove duplicate cards and substitute code for the "principal" copy    
+    [cards_in_deck, cards_not_in_deck, deck_to_compare_sub] = arkhrec.deck_builder.get_recommendations_for_deck(deck_to_compare)
+    deck_statistics = arkhrec.deck_builder.calculate_deck_statistics(deck_to_compare_sub)
+    deck_info = arkhrec.deck_builder.get_deck_info(deck_to_compare, cards_in_deck)    
 
-    duplicates = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'duplicates.pickle'))
-    card_jaccard_score = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_jaccard_score.pickle'))
-    
-    inv_cooc_ratio = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'inv_cooc_ratio.pickle'))
-    all_decks_clean = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'all_decks_clean.pickle'))
-    card_frequencies_clean = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_frequencies_clean.pickle'))
-
-    # Remove duplicate cards and substitute code for the "principal" copy
-    duplicates_in_deck = duplicates.loc[list((set(deck_to_compare['slots'][0].keys()) & set(duplicates.index)))]
-    deck_to_compare.loc[:,'slots'][0] = {duplicates_in_deck.loc[k]['duplicate_of_str'] if k in duplicates_in_deck.index else k:v for k,v in deck_to_compare['slots'][0].items()}
-    deck_to_compare_clean = deck_to_compare.copy()
-    deck_to_compare_clean.loc[:,'slots'][0] = {card: value for (card,value) in deck_to_compare['slots'][0].items() if card in card_frequencies_clean.index}
-    # Fetch the jaccard scores for the cards in the deck
-    deck_jaccards = card_jaccard_score[deck_to_compare_clean['slots'][0].keys()]
-    # Sum the jaccard scores for each card of the deck
-    recommendations = deck_jaccards.sum(axis=1).sort_values(ascending=False)
-    # See possible inclusions (drops cards already in deck)
-    inclusion_recs = recommendations.drop(deck_to_compare_clean['slots'][0].keys()).to_frame('Jaccard Score')
-    inclusion_recs.loc[:,'Jaccard Score'] = inclusion_recs.applymap(lambda x: "{:0.2f}".format(x))
-    inclusion_recs = inclusion_recs.join(card_cycles[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code','xp']].set_index('code_str'))
-    
-    inclusion_recs = inclusion_recs[inclusion_recs['type_code'].isin(['asset','event', 'skill'])][['name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp', 'Jaccard Score']]
-    
-    exclusion_recs = recommendations[deck_to_compare_clean['slots'][0].keys()].to_frame('Jaccard Score')
-    exclusion_recs.loc[:,'Jaccard Score'] = exclusion_recs.applymap(lambda x: "{:0.2f}".format(x))
-    
-    inv_recommendations = inv_cooc_ratio.loc[deck_to_compare['investigator_name'][0],:].transpose().to_frame('Coocurrence')
-    inv_recommendations.loc[:,'Coocurrence'] = inv_recommendations.applymap(lambda x: "{:0.0%}".format(x))
-    inv_inclusion_recs = inv_recommendations[~inv_recommendations.index.isin(deck_to_compare['slots'][0].keys())].join(card_cycles[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp']].set_index('code_str'))
-
-    inclusion_recs = inclusion_recs.join(inv_inclusion_recs['Coocurrence'])
-
-    inv_exclusion_recs = inv_recommendations[inv_recommendations.index.isin(deck_to_compare['slots'][0].keys())].join(card_cycles[['code_str','name','pack_code', 'faction_code']].set_index('code_str')).sort_values(by=inv_recommendations.columns[0],ascending=True)
-
-    import ast
-
-    m = deck_to_compare.meta[0]
-    print(deck_to_compare.columns)
-    ms=['','']
-    fs=[]
-    if m:
-        m = ast.literal_eval(m)
-        if 'faction_selected' in m:
-            fs = m['faction_selected']
-        if 'faction_1' in m:
-            ms[0] = m['faction_1']
-        if 'faction_2' in m:
-            ms[1] = m['faction_2']
-
-    inv_card_deck = card_cycles.set_index('code_str').loc[str(deck_to_compare['investigator_code'][0]).zfill(5)]
-
-    print(inv_card_deck.deck_options)
-    print(fs)
-    print(ms)
-    allowed_card_pool = arkhrec.investigator.cards_valid_for_investigator(card_cycles, inv_card_deck.deck_options, single_faction_selected=fs, multi_faction_selected=ms, apply_limits=False).set_index('code_str')
-
-    print(inclusion_recs)
-    inclusion_recs = inclusion_recs.loc[inclusion_recs.index & allowed_card_pool.index]
-    print(inclusion_recs)
-
-    deck_to_compare_with_info = pd.DataFrame.from_dict(deck_to_compare['slots'][0],orient='index').join(
-            card_cycles[['code_str','name','type_code','cost',"skill_willpower", "skill_agility", "skill_combat", "skill_intellect", "skill_wild", "slot"]].set_index(
-            'code_str'))
-
-    deck_to_compare_with_info.loc[:,['skill_willpower','skill_agility', 'skill_combat', 'skill_intellect', 'skill_wild']]=deck_to_compare_with_info[['skill_willpower','skill_agility', 'skill_combat', 'skill_intellect', 'skill_wild']].multiply(deck_to_compare_with_info[0],axis='index')
-    pips_sum = deck_to_compare_with_info[['skill_willpower','skill_agility', 'skill_combat', 'skill_intellect', 'skill_wild']].sum()
-    slots_count = deck_to_compare_with_info.groupby('slot')[0].sum()
-    
-
-    type_distribution = deck_to_compare_with_info.groupby('type_code')[0].sum()
-    type_distribution = type_distribution / type_distribution.sum()
-    
-
-    deck_to_compare_with_info['w_costs']=deck_to_compare_with_info['cost'] * deck_to_compare_with_info[0]
-    mean_cost = deck_to_compare_with_info[~deck_to_compare_with_info.cost.isnull()]['w_costs'].sum() / deck_to_compare_with_info[~deck_to_compare_with_info.cost.isnull()][0].sum()
-    assets_percentage = type_distribution['asset'] if 'asset' in type_distribution.index else 0
-    skills_percentage = type_distribution['skill'] if 'skill' in type_distribution.index else 0
-    events_percentage = type_distribution['event'] if 'event' in type_distribution.index else 0
-    
-    skill_willpower = pips_sum['skill_willpower'] if 'skill_willpower' in pips_sum.index else 0
-    skill_combat = pips_sum['skill_combat'] if 'skill_combat' in pips_sum.index else 0
-    skill_intellect = pips_sum['skill_intellect'] if 'skill_intellect' in pips_sum.index else 0
-    skill_agility = pips_sum['skill_agility'] if 'skill_agility' in pips_sum.index else 0
-    skill_wild = pips_sum['skill_wild'] if 'skill_wild' in pips_sum.index else 0
-    slots_count = slots_count.index * slots_count
-    slots_count = slots_count.str.cat().replace("Hand x2", "HandHand").replace("Arcane x2", "ArcaneArcane").replace("Accessory x2", "AccessoryAccessory").replace("Body x2", "BodyBody").replace("Ally x2", "AllyAlly")
-    hand_slot = slots_count.count("Hand")
-    arcane_slot = slots_count.count("Arcane")
-    accessory_slot = slots_count.count("Accessory")
-    body_slot = slots_count.count("Body")
-    ally_slot = slots_count.count("Ally")
-
-    # treachery_percentage = type_distribution['treachery'] if 'treachery' in type_distribution.index else 0
-    inv_mean_cost = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['mean_cost'].mean()
-    inv_assets_percentage = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['asset_percentages'].mean()
-    inv_events_percentage = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['event_percentages'].mean()
-    inv_skills_percentage = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['skill_percentages'].mean()
-
-    inv_hand_slot = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['hand_slot'].mean()
-    inv_arcane_slot = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['arcane_slot'].mean()
-    inv_ally_slot = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['ally_slot'].mean()
-    inv_body_slot = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['body_slot'].mean()
-    inv_accessory_slot = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['accessory_slot'].mean()
-
-    inv_skill_willpower = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['skill_willpower'].mean()
-    inv_skill_combat = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['skill_combat'].mean()
-    inv_skill_agility = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['skill_agility'].mean()
-    inv_skill_intellect = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['skill_intellect'].mean()
-    inv_skill_wild = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]]['skill_wild'].mean()
-
-    deck_statistics = {
-        'mean_cost': mean_cost,
-        'assets_percentage': assets_percentage*100,
-        'skills_percentage': skills_percentage*100,
-        'events_percentage': events_percentage*100,
-        'hand_slot': hand_slot,
-        'arcane_slot': arcane_slot,
-        'body_slot': body_slot,
-        'accessory_slot': accessory_slot,
-        'ally_slot': ally_slot,
-        'skill_willpower': skill_willpower,
-        'skill_agility': skill_agility,
-        'skill_combat': skill_combat,
-        'skill_intellect': skill_intellect,
-        'skill_wild': skill_wild,
-        'inv_mean_cost': inv_mean_cost,
-        'inv_assets_percentage': inv_assets_percentage*100,
-        'inv_events_percentage': inv_events_percentage*100,
-        'inv_skills_percentage': inv_skills_percentage*100,
-        'inv_hand_slot': inv_hand_slot,
-        'inv_arcane_slot': inv_arcane_slot,
-        'inv_body_slot': inv_body_slot,
-        'inv_accessory_slot': inv_accessory_slot,
-        'inv_ally_slot': inv_ally_slot,
-        'inv_skill_willpower': inv_skill_willpower,
-        'inv_skill_agility': inv_skill_agility,
-        'inv_skill_combat': inv_skill_combat,
-        'inv_skill_intellect': inv_skill_intellect,
-        'inv_skill_wild': inv_skill_wild
-        }
-    
-    deck = pd.DataFrame.from_dict(
-        deck_to_compare.loc[:,'slots'][0], orient='index', columns=['count']).join(
-            card_cycles[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp', 'myriad']].set_index('code_str')).join(
-                inv_exclusion_recs[['Coocurrence']]).join(
-                    exclusion_recs[['Jaccard Score']])
-
-    print(deck)
-    deck_info =deck_to_compare[['investigator_name', 'investigator_code', 'name', 'taboo_id', 'date_creation', 'date_update', 'xp']].to_dict(orient='index')[0]
-    deck_info['investigator_code'] = str(deck_info['investigator_code']).zfill(5)
-    deck_info['date_creation'] = deck_info['date_creation'][0:10]
-    deck_info['date_update'] = deck_info['date_update'][0:10]
-    deck['total_xp'] = deck['xp'] * deck['count']
-    deck.loc[deck['myriad']==1, 'total_xp'] = deck.loc[deck['myriad']==1,'xp']
-    # deck[deck['myriad']==1] = deck[deck['myriad']==1]['xp']
-    deck_info['xp'] = "{:0.0f}".format(deck['total_xp'].sum())
-    deck_info['total_cards'] = deck['count'].sum()
-    deck_info['inv_deck_count'] = all_decks_clean[all_decks_clean['investigator_name']==deck_to_compare['investigator_name'][0]].count()[0]
-
-
-    deck['color'] = deck['faction_code']
-    deck.loc[deck['faction2_code'].notna(),'color']='multi'
-    deck = convert_xp_to_str(deck)
-    deck = deck.fillna("-")
-
-    inclusion_recs['color'] = inclusion_recs['faction_code']
-    inclusion_recs.loc[inclusion_recs['faction2_code'].notna(),'color']='multi'
-    inclusion_recs = convert_xp_to_str(inclusion_recs)
-    inclusion_recs = inclusion_recs.fillna("-")
-    inclusion_recs['cycle'] = inclusion_recs.apply(arkhrec.helpers.set_cycle, axis=1)
-    inclusion_recs = inclusion_recs.loc[inclusion_recs.index.intersection(card_collection_codes)]
-    deck['cycle'] = deck.apply(arkhrec.helpers.set_cycle, axis=1)
-
-    return render_template('deck/view.html', deck=deck.to_dict('index'), inclusion_recs=inclusion_recs.to_dict('index'), deck_statistics=deck_statistics, deck_info=deck_info)
-
-def convert_xp_to_str(deck):
-    deck.loc[:,'xp'] = deck.loc[:,'xp'].to_frame().applymap(lambda x: "{:0.0f}".format(x) if x>0 else '')
-    return deck
+    return render_template('deck/view.html', cards_in_deck=cards_in_deck.to_dict('index'), cards_not_in_deck=cards_not_in_deck.to_dict('index'), deck_statistics=deck_statistics, deck_info=deck_info)
 
