@@ -27,7 +27,7 @@ def get_all_decks():
 
 def get_analysed_card_frequencies():
     if 'analysed_card_frequencies' not in g:
-        g.analysed_card_frequencies = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'analysed_card_frequencies.pickle'))
+        g.analysed_card_frequencies = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_frequencies_clean.pickle'))
 
     return g.analysed_card_frequencies
 
