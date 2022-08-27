@@ -12,7 +12,10 @@ PACKS_WITHOUT_PLAYER_CARDS = ['tsk', 'promotional', 'parallel', 'side_stories']
 
 def get_all_cards():
     if 'all_cards' not in g:
-        g.all_cards = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'all_cards.pickle'))
+        all_cards = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'all_cards.pickle'))
+        all_cards.loc[:,'unique_code'] = all_cards.loc[:, 'code_str']
+        all_cards.loc[~all_cards['duplicate_of'].isna(), 'unique_code'] = all_cards.loc[~all_cards['duplicate_of'].isna(), 'duplicate_of'].astype(int).astype(str).apply(str.zfill, args=[5])
+        g.all_cards=all_cards
            
     return g.all_cards
 
