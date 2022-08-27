@@ -12,12 +12,8 @@ PACKS_WITHOUT_PLAYER_CARDS = ['tsk', 'promotional', 'parallel', 'side_stories']
 
 def get_all_cards():
     if 'all_cards' not in g:
-        all_cards = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_cycles.pickle'))
-        all_cards.loc[:,'unique_code'] = all_cards.loc[:, 'code_str']
-        all_cards.loc[~all_cards['duplicate_of'].isna(), 'unique_code'] = all_cards.loc[~all_cards['duplicate_of'].isna(), 'duplicate_of'].astype(int).astype(str).apply(str.zfill, args=[5])
-        g.all_cards = all_cards
-        
-    
+        g.all_cards = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'all_cards.pickle'))
+           
     return g.all_cards
 
 def get_all_decks():
@@ -26,11 +22,11 @@ def get_all_decks():
 
     return g.all_decks
 
-def get_analysed_card_codes():
-    if 'analysed_card_codes' not in g:
-        g.analysed_card_codes = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_frequencies_clean.pickle'))
+def get_analysed_card_frequencies():
+    if 'analysed_card_frequencies' not in g:
+        g.analysed_card_frequencies = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'analysed_card_frequencies.pickle'))
 
-    return g.analysed_card_codes
+    return g.analysed_card_frequencies
 
 def get_card_cooccurrences():
     if 'card_cooccurrences' not in g:
@@ -111,7 +107,7 @@ def get_all_investigators(index='code_str'):
 #  - Columns:       
 def get_analysed_cards():
     all_cards = get_all_cards()
-    analysed_card_codes = get_analysed_card_codes()
+    analysed_card_codes = get_analysed_card_frequencies()
     card_cooc = get_card_cooccurrences()
 
     all_cards = all_cards.set_index('code_str')

@@ -33,6 +33,6 @@ def view(card_id):
     usage_by_investigators = cd.get_usage_by_investigators(card_id)
 
     num_of_decks = len(cd.get_all_decks())
-    num_of_cards = len(cd.get_analysed_card_codes())
+    num_of_cards = len(cd.get_analysed_card_frequencies())
 
     return render_template('card/view.html', card_id=card_id, card_info=filtered_card_similarities.to_dict(orient='index'), investigators=usage_by_investigators.to_dict(orient='index'), num_of_decks=num_of_decks, num_of_cards=num_of_cards)

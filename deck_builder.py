@@ -1,4 +1,4 @@
-from arkhrec.data_helpers import filter_cards_in_collection, get_all_cards, get_all_decks, get_all_investigators, get_analysed_card_codes, get_card_investigator_cooccurrences, get_card_jaccard_scores, get_duplicates_unique_code, get_analysed_cards, get_collection, get_investigator_deck_statistics
+from arkhrec.data_helpers import filter_cards_in_collection, get_all_cards, get_all_decks, get_all_investigators, get_analysed_card_frequencies, get_card_investigator_cooccurrences, get_card_jaccard_scores, get_duplicates_unique_code, get_analysed_cards, get_collection, get_investigator_deck_statistics
 import arkhrec.general_helpers
 import pandas as pd
 import math
@@ -253,7 +253,7 @@ def cards_valid_for_investigator(card_cycles_pool, deck_options, single_faction_
 
 def remove_duplicates_from_deck(deck_to_compare):
     duplicates = get_duplicates_unique_code()
-    analysed_card_codes = get_analysed_card_codes()
+    analysed_card_codes = get_analysed_card_frequencies()
     duplicates_in_deck = duplicates.loc[list((set(deck_to_compare['slots'][0].keys()) & set(duplicates.index)))]
     deck_to_compare_sub = deck_to_compare.copy()    
     deck_to_compare_sub.loc[:,'slots'][0] = {duplicates_in_deck.loc[k]['unique_code'] if k in duplicates_in_deck.index else k:v for k,v in deck_to_compare['slots'][0].items()}

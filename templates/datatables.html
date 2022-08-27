@@ -18,7 +18,7 @@
   
       <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }}</td></a>
     
-    <td>{{ card['xp'] if card['xp']!='' else '0'}}</td>
+    <td>{{ card['xp_text'] if card['xp_text']!='' else '0'}}</td>
     <td>{{ card['cycle'] }}</td>
     <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>
@@ -69,7 +69,7 @@
   
       <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }}</td></a>
     
-    <td>{{ card['xp'] if card['xp']!='' else '0'}}</td>
+    <td>{{ card['xp_text'] if card['xp_text']!='' else '0'}}</td>
     <td>{{ card['cycle'] }}</td>
     <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>

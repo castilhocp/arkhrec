@@ -5,12 +5,14 @@ import operator
 import collections
 import operator
 
+# Script that runs periodically, fetches new decks from Arkham DB and calculates cooccurrence metrics
+
 def run():
 
     ############################################################################################################################
-    ####  Constants definition                                                                                              ####
+    ####  Reads cards and decks                                                                                             ####
     ############################################################################################################################
-    MINIMUM_FREQUENCY = 20
+    MINIMUM_FREQUENCY = 5
 
     [all_decks, card_cycles, duplicates] = read_decks_and_cards()
 
@@ -28,14 +30,14 @@ def run():
                             map(collections.Counter, all_decks_clean["slots"]))).items())
 
     
-    card_frequencies_clean = card_frequencies[card_frequencies[1]>MINIMUM_FREQUENCY]
+    analysed_card_frequencies = card_frequencies[card_frequencies[1]>MINIMUM_FREQUENCY]
     print("Card frequency - total")
     print(card_frequencies.describe())
     print("Card frequency - after cleaning with limit = {:d}".format(MINIMUM_FREQUENCY))
-    print(card_frequencies_clean.describe())
+    print(analysed_card_frequencies.describe())
 
-    card_frequencies_clean.columns = ['card', 'count']
-    card_frequencies_clean = card_frequencies_clean.set_index('card')
+    analysed_card_frequencies.columns = ['card', 'count']
+    analysed_card_frequencies = analysed_card_frequencies.set_index('card')
 
     ############################################################################################################################
     ####   Create vector with decks containing only selected cards and without the number of cards in deck                  ####
@@ -44,19 +46,19 @@ def run():
     # should this be a dictionary or only an array? Seems to me an array would be better than filling it with 1s just for counting...
     
     all_decks_clean.loc[:,'slots_count'] = all_decks_clean.apply(lambda deck: {card: 1 for (card,value) in 
-                                            deck['slots'].items() if card in card_frequencies_clean.index},
+                                            deck['slots'].items() if card in analysed_card_frequencies.index},
                                             axis=1)
 
     # Export to file
     print("Exporting all_decks_clean and card_frequencies_clean")
     all_decks_clean.to_pickle('datafiles/all_decks_clean.pickle')
-    card_frequencies_clean.to_pickle('datafiles/card_frequencies_clean.pickle')
+    analysed_card_frequencies.to_pickle('datafiles/analysed_card_frequencies.pickle')
     
     ############################################################################################################################
     ####   Calculate the card coocurrence value (number of times a card appears together with another)                      ####
     ############################################################################################################################
     
-    card_frequencies_only = card_frequencies_clean.index
+    card_frequencies_only = analysed_card_frequencies.index
     results = dict()
     for card in card_frequencies_only:
         # !!REFACTOR
@@ -76,7 +78,7 @@ def run():
         for d in decks_with_card["slots_count"]:
             results[card] += collections.Counter({x: 1 for x in d})
     card_cooc = pd.DataFrame(results).fillna(0)
-    card_cooc.to_pickle("datafiles/card_cooc.pickle")
+    card_cooc.to_pickle("datafiles/card_cooc_all_time.pickle")
     
     ############################################################################################################################
     ####   Calculate the investigator x card coocurrence value (times a card appears together with an investigator)         ####
@@ -86,11 +88,10 @@ def run():
     investigators = all_decks_clean.groupby(['investigator_name'])['investigator_name'].count()
 
     # Calculate the card occurence value per investigator
-    card_frequencies_only = card_frequencies_clean.index
+
     results = dict()
     for investigator in investigators.index:
         print('.',end='')
-    #     print(investigator)
         decks_with_investigator =  all_decks_clean[all_decks_clean['investigator_name']==investigator]
         
         # Counting the number of cards
@@ -105,16 +106,6 @@ def run():
     ############################################################################################################################
     #!!REFACTOR
     # This feels very ugly and wrong. Probably have to refactor this first
-
-    # def calculate_ppmi(row):
-    #     for col in row.index:
-    #         ki = card_frequencies.loc[row.name]['count']
-    #         kj = card_frequencies.loc[col]['count']
-    #         kij = card_cooc.loc[row.name][col]
-    #         log_arg = total_cards*kij / (ki*kj)
-    #         ppmi = math.log2(log_arg) if log_arg>0 else 0
-    #         row[col] = ppmi
-    #     return row
 
     def calculate_jaccard_similarity(row):
         for col in row.index:
@@ -158,9 +149,9 @@ def run():
     inv_cooc_ratio = inv_cooc_ratio.iloc[:,:-1].div(inv_cooc_ratio.iloc[:,-1:].squeeze(), axis=0)
 
     
-    card_cooc_ratio.to_pickle("datafiles/card_cooc_ratio.pickle")
-    card_jaccard_score.to_pickle("datafiles/card_jaccard_score.pickle")
-    inv_cooc_ratio.to_pickle("datafiles/inv_cooc_ratio.pickle")
+    card_cooc_ratio.to_pickle("datafiles/card_cooc_ratio_all_time.pickle")
+    card_jaccard_score.to_pickle("datafiles/card_jaccard_score_all_time.pickle")
+    inv_cooc_ratio.to_pickle("datafiles/inv_cooc_ratio_all_time.pickle")
 
 
 def read_decks_and_cards():
@@ -184,21 +175,23 @@ def read_decks_and_cards():
         print('.',end='',flush=True)
     print("\nDone")
 
-    card_cycles = pd.concat(card_cycles_array, ignore_index=True)
+    all_cards = pd.concat(card_cycles_array, ignore_index=True)
 
     # Change the format of the "code" variable from int to string
-    # This was automatically infered by the "read_json" function, so there is maybe a more intelligente way to solve this at read-time
-    card_cycles['code_str'] = card_cycles['code'].astype(str).apply(str.zfill, args=[5])
-    card_cycles.set_index('code_str')
+    # This was automatically infered by the "read_json" function, so there is maybe a more intelligent way to solve this at read-time
+    all_cards['code_str'] = all_cards['code'].astype(str).apply(str.zfill, args=[5])
+    all_cards.set_index('code_str')
 
-    duplicates = card_cycles[~card_cycles['duplicate_of'].isnull()][['duplicate_of','code_str']].set_index('code_str')
+    duplicates = all_cards[~all_cards['duplicate_of'].isnull()][['duplicate_of','code_str']].set_index('code_str')
     duplicates['duplicate_of_str'] = duplicates['duplicate_of'].to_frame().applymap(lambda x: "{:05.0f}".format(x))
+    all_cards.loc[:,'unique_code'] = all_cards.loc[:, 'code_str']
+    all_cards.loc[~all_cards['duplicate_of'].isna(), 'unique_code'] = all_cards.loc[~all_cards['duplicate_of'].isna(), 'duplicate_of'].astype(int).astype(str).apply(str.zfill, args=[5])
 
     # Export to file
-    duplicates.to_pickle("datafiles/duplicates.pickle")
-    card_cycles.to_pickle("datafiles/card_cycles.pickle")
+    # duplicates.to_pickle("datafiles/duplicates.pickle")
+    all_cards.to_pickle("datafiles/all_cards.pickle")
 
-    return [all_decks, card_cycles, duplicates]
+    return [all_decks, all_cards]
     ########################################### END OF READINGS ##################################################################
 
 def treat_decks(all_decks, card_cycles, duplicates):
