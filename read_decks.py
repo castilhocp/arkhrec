@@ -9,7 +9,7 @@ import logging
 
 # Script that runs periodically, fetches new decks from Arkham DB and calculates cooccurrence metrics
 
-def run():
+def read_decks_from_arkhamdb():
 
     root = logging.getLogger()
     root.handlers = []
@@ -418,3 +418,14 @@ def treat_decks(all_decks, card_cycles, duplicates):
     all_decks_clean.loc[:,'ally_slot'] = ally_slot_total
     
     return all_decks_clean
+
+def update_cards_repository():
+    import os
+    os.system('git clone https://github.com/Kamalisk/arkhamdb-json-data ../arkhamdb-json-data')
+    os.system('cp -a ../arkhamdb-json-data/pack/. datafiles/cards/')
+    os.system('cp ../arkhamdb-json-data/cycles.json datafiles/')
+    os.system('cp ../arkhamdb-json-data/packs.json datafiles/')
+
+update_cards_repository()
+read_decks_from_arkhamdb()
+
