@@ -38,7 +38,7 @@ def run():
         'cooccurrences_calculated.pickle',
         'inv_cooccurrences_calculated.pickle'
     ]
-    
+
 
     import shutil
 
@@ -182,6 +182,11 @@ def run():
             else:
                 logging.info("No new cards to calculate cooccurrence")
 
+            new_cooccurrences['jaccard'] = new_cooccurrences['cooccurrences']/(new_cooccurrences['occurrences_card1'] + new_cooccurrences['occurrences_card2'] - new_cooccurrences['cooccurrences'])
+            new_inv_cooccurrences['presence'] = new_inv_cooccurrences['inv_cooccurrences'] / new_inv_cooccurrences['occurrences_investigator']
+            new_inv_cooccurrences['card_occurrences_ratio'] = new_inv_cooccurrences['occurrences_card'] / new_inv_cooccurrences['num_decks']
+            new_inv_cooccurrences['synergy'] = new_inv_cooccurrences['presence'] - new_inv_cooccurrences['card_occurrences_ratio']
+
             # Export to file
             logging.info("Exporting all_decks_clean and card_frequencies_clean")
             all_decks_clean.to_pickle('datafiles/all_decks_clean.pickle')
@@ -320,8 +325,8 @@ def read_cards_and_packs():
         all_packs[pack.pop('code')] = pack
 
     # Export to file
-    duplicates.to_pickle("datafiles/duplicates_debug.pickle")
-    all_cards.to_pickle("datafiles/all_cards_debug.pickle")
+    duplicates.to_pickle("datafiles/duplicates.pickle")
+    all_cards.to_pickle("datafiles/all_cards.pickle")
 
     return [all_cards, duplicates, all_packs]
     ########################################### END OF READINGS ##################################################################
