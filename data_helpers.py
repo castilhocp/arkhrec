@@ -12,7 +12,7 @@ PACKS_WITHOUT_PLAYER_CARDS = ['tsk', 'promotional', 'parallel', 'side_stories']
 
 def get_all_cards():
     if 'all_cards' not in g:
-        all_cards = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_cycles.pickle'))
+        all_cards = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'all_cards.pickle'))
         all_cards.loc[:,'unique_code'] = all_cards.loc[:, 'code_str']
         all_cards.loc[~all_cards['duplicate_of'].isna(), 'unique_code'] = all_cards.loc[~all_cards['duplicate_of'].isna(), 'duplicate_of'].astype(int).astype(str).apply(str.zfill, args=[5])
         g.all_cards=all_cards
@@ -27,25 +27,19 @@ def get_all_decks():
 
 def get_analysed_card_frequencies():
     if 'analysed_card_frequencies' not in g:
-        g.analysed_card_frequencies = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_frequencies_clean.pickle'))
+        g.analysed_card_frequencies = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'analysed_card_frequencies.pickle'))
 
     return g.analysed_card_frequencies
 
 def get_card_cooccurrences():
     if 'card_cooccurrences' not in g:
-        g.card_cooccurrences = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_cooc.pickle'))
+        g.card_cooccurrences = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'cooccurrences_calculated.pickle'))
 
     return g.card_cooccurrences
 
-def get_card_jaccard_scores():
-    if 'card_jaccard_scores' not in g:
-        g.card_jaccard_scores = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'card_jaccard_score.pickle'))
-    
-    return g.card_jaccard_scores
-
 def get_card_investigator_cooccurrences():
     if 'card_investigator_cooccurrences' not in g:
-        g.card_investigator_cooccurrences = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'inv_cooc_ratio.pickle'))
+        g.card_investigator_cooccurrences = pd.read_pickle(os.path.join(current_app.root_path, 'datafiles',  'inv_cooccurrences_calculated.pickle'))
 
     return g.card_investigator_cooccurrences
 
@@ -111,15 +105,12 @@ def get_all_investigators(index='code_str'):
 def get_analysed_cards():
     all_cards = get_all_cards()
     analysed_card_codes = get_analysed_card_frequencies()
-    card_cooc = get_card_cooccurrences()
-
+    # card_cooc = get_card_cooccurrences()
     all_cards = all_cards.set_index('code_str')
     analysed_cards = all_cards.merge(analysed_card_codes, left_index=True, right_index=True)
 
-    tuples = list(zip(card_cooc.index, card_cooc.index))
-    card_cooc_stacked = card_cooc.stack()[tuples]
-    analysed_cards = analysed_cards.join(card_cooc_stacked.to_frame('Occurrences').reset_index(level=[0]))
-    analysed_cards['occurrences_rank'] = analysed_cards['Occurrences'].rank(method="max", ascending=False)
+    analysed_cards['appearances'] = analysed_cards['appearances'].astype(int)
+    analysed_cards['appearances_rank'] = analysed_cards['appearances'].rank(method="max", ascending=False)
 
     analysed_cards = arkhrec.general_helpers.convert_xp_to_str(analysed_cards)
     analysed_cards = arkhrec.general_helpers.set_color(analysed_cards)
@@ -137,15 +128,15 @@ def get_analysed_cards():
 def get_similarities_with_card(card_id):
     analysed_cards = get_analysed_cards()
     card_cooc = get_card_cooccurrences()
-    card_jaccard_score = get_card_jaccard_scores()
+ 
+    c1 = card_cooc.xs(card_id, level=1).drop('occurrences_card2', axis=1).rename(columns={'occurrences_card1':'occurrences'})
+    c2 = card_cooc.xs(card_id, level=0).drop('occurrences_card1', axis=1).rename(columns={'occurrences_card2':'occurrences'})
+    c = pd.concat([c1,c2])
 
-    cooc_with_card = card_cooc[card_id].to_frame('Cooccurrences')
-    
-    selected_card_jaccard_scores = card_jaccard_score[card_id].to_frame()
-    selected_card_jaccard_scores.columns = ['Jaccard Score']
-    selected_card_jaccard_scores.loc[:,'Jaccard Score'] = selected_card_jaccard_scores.applymap(lambda x: "{:0.0%}".format(x))
-
-    analysed_cards_with_similarities = analysed_cards.join(selected_card_jaccard_scores).join(cooc_with_card)
+    analysed_cards_with_similarities = analysed_cards.join(c)
+    analysed_cards_with_similarities = analysed_cards_with_similarities[~analysed_cards_with_similarities.index.duplicated()]
+    analysed_cards_with_similarities.loc[:,'jaccard'] = analysed_cards_with_similarities['jaccard'].apply(lambda x: "{:0.0%}".format(x))   
+    analysed_cards_with_similarities = analysed_cards_with_similarities.dropna()
 
     return analysed_cards_with_similarities
 
@@ -160,37 +151,35 @@ def filter_cards_in_collection(cards_to_filter, other_cards_to_include=[]):
     return filtered_cards  
 
 def get_usage_by_investigators(card_id):
-    inv_cooc_ratio = get_card_investigator_cooccurrences()
-    all_decks = get_all_decks()
+    inv_cooc = get_card_investigator_cooccurrences()
     investigators = get_all_investigators('name')
 
-    usage_by_investigators = inv_cooc_ratio[card_id].to_frame()
-    usage_by_investigators.columns = ['Coocurrence']
-    usage_by_investigators.loc[:,'Coocurrence'] = usage_by_investigators.applymap(lambda x: "{:0.0%}".format(x))   
-
-    number_of_decks_per_investigator = all_decks.groupby('investigator_name').count()['id'].to_frame()
-    number_of_decks_per_investigator.columns = ['number_of_decks']
+    usage_by_investigators = inv_cooc.xs(card_id,level=1)
+    usage_by_investigators = usage_by_investigators.rename(columns={'cooccurrence':'Coocurrence', 'occurrences_investigator': 'number_of_decks'})
+    usage_by_investigators.loc[:,'presence'] = usage_by_investigators['presence'].apply(lambda x: "{:0.0%}".format(x))   
     
-    usage_by_investigators = usage_by_investigators.join(investigators[['faction_code', 'faction2_code', 'code_str']])
+    usage_by_investigators = usage_by_investigators.join(investigators.reset_index().set_index('code_str')[['name', 'faction_code', 'faction2_code']])
     usage_by_investigators = arkhrec.general_helpers.set_color(usage_by_investigators)
-    usage_by_investigators = usage_by_investigators.join(number_of_decks_per_investigator)
 
-    usage_by_investigators.index.name = 'investigator_name'
-    usage_by_investigators = usage_by_investigators.reset_index().set_index('code_str')
+    usage_by_investigators = usage_by_investigators.reset_index().set_index('investigator')
     usage_by_investigators['cycle'] = usage_by_investigators.apply(arkhrec.general_helpers.set_cycle, axis=1)
-    usage_by_investigators = usage_by_investigators.reset_index().set_index('investigator_name')
+    usage_by_investigators = usage_by_investigators.reset_index().set_index('name')
+    usage_by_investigators.index.name = 'investigator_name'
+    usage_by_investigators = usage_by_investigators.dropna()
+
 
     return usage_by_investigators
 
 def get_investigator_cards_usage(investigator):
     analysed_cards = get_analysed_cards()
-    inv_cooc_ratio = get_card_investigator_cooccurrences()
+    inv_cooc = get_card_investigator_cooccurrences()
+
     # Joins the number of cooccurrences of each card with this investigator
-    inv_card_cooccurrences = inv_cooc_ratio.loc[investigator['name'][0]].transpose().to_frame('inv_occurrence')
+    inv_card_cooccurrences = inv_cooc.loc[investigator.index].droplevel('investigator')
+    print(inv_card_cooccurrences)
     investigator_cards_usage = analysed_cards.join(inv_card_cooccurrences)
-    # Calculates the synergy with investigator
-    investigator_cards_usage['overall_occurrence_ratio'] = investigator_cards_usage['Occurrences'] / len(get_all_decks())
-    investigator_cards_usage['synergy'] = investigator_cards_usage['inv_occurrence'] - investigator_cards_usage['overall_occurrence_ratio']
+
+    investigator_cards_usage = investigator_cards_usage.dropna()
 
     return investigator_cards_usage
 

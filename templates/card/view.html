@@ -28,12 +28,12 @@
                 <div class="col-md-8">
                     <ul><b>Name:</b> {{card_info[card_id]['name']}}</ul>
                     <ul><b>Faction:</b> {{card_info[card_id]['faction_code']|capitalize}}</ul>
-                    <ul><b>Cost:</b> {{ card_info[card_id]['cost'] }}</ul>
+                    <ul><b>Cost:</b> {{ '%0.0f'|format(card_info[card_id]['cost']) }}</ul>
                     <ul><b>Traits:</b> {{card_info[card_id]['traits']}}</ul>
-                    <ul><b>XP:</b> {{card_info[card_id]['xp_text']}}</ul>
+                    <ul><b>XP:</b> {{card_info[card_id]['xp_text'] if card_info[card_id]['xp_text'] != "" else 0}}</ul>
                     <ul><b>Text:</b> {{card_info[card_id]['text_icons']|safe}}</ul>
-                    <ul><b>Occurrence:</b> {{ 'Present in %d out of %d decks analysed (%d%%)'|format(card_info[card_id]['Occurrences'], num_of_decks, (100*card_info[card_id]['Occurrences'] / num_of_decks)) }}</ul>
-                    <ul><b>Popularity:</b>  {{ 'Ranked %d out of %d cards analysed (percentile %d%%)'|format((card_info[card_id]['occurrences_rank']),num_of_cards,100-100*(card_info[card_id]['occurrences_rank'])/num_of_cards) }} </ul> 
+                    <ul><b>Occurrence:</b> {{ 'Present in %d out of %d decks analysed (%d%%)'|format(card_info[card_id]['occurrences'], num_of_decks, (100*card_info[card_id]['occurrences'] / num_of_decks)) }}</ul>
+                    <ul><b>Popularity:</b>  {{ 'Ranked %d out of %d cards analysed (percentile %d%%)'|format((card_info[card_id]['appearances_rank']),num_of_cards,100-100*(card_info[card_id]['appearances_rank'])/num_of_cards) }} </ul> 
                 </div>
             </div>
         </div>

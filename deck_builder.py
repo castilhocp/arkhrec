@@ -1,4 +1,4 @@
-from arkhrec.data_helpers import filter_cards_in_collection, get_all_cards, get_all_decks, get_all_investigators, get_analysed_card_frequencies, get_card_investigator_cooccurrences, get_card_jaccard_scores, get_duplicates_unique_code, get_analysed_cards, get_collection, get_investigator_deck_statistics
+from arkhrec.data_helpers import filter_cards_in_collection, get_all_cards, get_all_decks, get_all_investigators, get_analysed_card_frequencies, get_card_cooccurrences, get_card_investigator_cooccurrences, get_duplicates_unique_code, get_analysed_cards, get_collection, get_investigator_deck_statistics
 import arkhrec.general_helpers
 import pandas as pd
 import math
@@ -97,7 +97,7 @@ def build_average_deck(investigator, analysed_cards, deck_statistics):
   
     card_pool = cards_valid_for_investigator(card_cycles_pool, inv_card_deck.deck_options, max_faction_selected, [max_faction_1, max_faction_2])
         
-    card_pool = card_pool.sort_values(['inv_occurrence','synergy'],ascending=False)
+    card_pool = card_pool.sort_values(['presence','synergy'],ascending=False)
     card_pool_xp = card_pool[card_pool['xp']>0]
     card_pool = card_pool[card_pool['xp']==0]
     exclusion_cards = ['In the Thick of It', 'Underworld Support']
@@ -124,7 +124,7 @@ def build_average_deck(investigator, analysed_cards, deck_statistics):
     final_deck_size = average_deck['amount'].sum()
 
     while final_deck_size < deck_size:
-        new_card_pool = card_pool.drop(average_deck.index, errors='ignore').sort_values(['inv_occurrence','synergy'], ascending=False)
+        new_card_pool = card_pool.drop(average_deck.index, errors='ignore').sort_values(['presence','synergy'], ascending=False)
         if new_card_pool.empty:
             break
         new_card_pool.loc[:,'cumsum_deck_limit'] = new_card_pool['deck_limit'].cumsum()
@@ -151,6 +151,7 @@ def build_average_deck(investigator, analysed_cards, deck_statistics):
             card_pool_xp.loc[:, 'cumsum_deck_limit'] = card_pool_xp['deck_limit'].cumsum()
             card_pool_xp.loc[:, 'total_xp'] = card_pool_xp['deck_limit'] * card_pool_xp['xp']
             card_pool_xp.loc[card_pool_xp['myriad']==1, 'total_xp'] = card_pool_xp.loc[card_pool_xp['myriad']==1,'xp']
+            card_pool_xp.loc[card_pool_xp['exceptional']==1, 'total_xp'] = 2*card_pool_xp.loc[card_pool_xp['exceptional']==1,'total_xp']
             card_pool_xp.loc[:, 'cumsum_xp'] = card_pool_xp['total_xp'].cumsum()
             if card_pool_xp.head(1)['xp'][0] > xp_to_include:
                 card_pool_xp = card_pool_xp.drop(card_pool_xp.head(1).index)
@@ -175,7 +176,7 @@ def build_average_deck(investigator, analysed_cards, deck_statistics):
         if not xp_cards_to_include.empty:
             # Exclude least similar 0xp cards
             number_of_cards_to_include = xp_cards_to_include['amount'].sum()
-            average_deck = average_deck.sort_values('inv_occurrence')
+            average_deck = average_deck.sort_values('presence')
             average_deck.loc[:,"cumsum_amount"] = average_deck['amount'].cumsum()
             
             number_of_cards_to_exclude = number_of_cards_to_include
@@ -189,7 +190,7 @@ def build_average_deck(investigator, analysed_cards, deck_statistics):
                     break
             average_deck = average_deck.append(xp_cards_to_include)
 
-    average_deck.sort_values(['type_code','inv_occurrence'])
+    average_deck.sort_values(['type_code','presence'])
     average_deck['color'] = average_deck['faction_code']
     average_deck['total_xp'] = average_deck['amount'] * average_deck['xp']
     
@@ -211,7 +212,7 @@ def cards_valid_for_investigator(card_cycles_pool, deck_options, single_faction_
         elif 'faction' in do and 'level' in do and 'limit' in do:
             restriction_pool = card_cycles_pool[(card_cycles_pool['faction_code'].isin(do['faction'])) & card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1))]
             if apply_limits:
-                restriction_pool = restriction_pool.sort_values('inv_occurrence', ascending=False).head(do['limit'])    
+                restriction_pool = restriction_pool.sort_values('presence', ascending=False).head(do['limit'])    
             card_pools.append(restriction_pool)
             # filter_limits.append({'factions': do['faction'], 'level': do['level'], 'limit': do['limit']})
         elif 'level' in do and 'faction' not in do and 'limit' in do:
@@ -222,7 +223,7 @@ def cards_valid_for_investigator(card_cycles_pool, deck_options, single_faction_
             restriction_pool = card_cycles_pool[((card_cycles_pool['faction_code'].isin(filter_classes)) | (card_cycles_pool['faction2_code'].isin(filter_classes)) | (card_cycles_pool['faction3_code'].isin(filter_classes)) ) & card_cycles_pool['xp'].isin(range(do['level']['min'], do['level']['max']+1))]
 
             if apply_limits:
-                restriction_pool = restriction_pool.sort_values('inv_occurrence', ascending=False).head(do['limit'])
+                restriction_pool = restriction_pool.sort_values('presence', ascending=False).head(do['limit'])
             card_pools.append(restriction_pool)
 
         elif 'name' in do:
@@ -231,10 +232,10 @@ def cards_valid_for_investigator(card_cycles_pool, deck_options, single_faction_
                 if 'limit' in do and 'type' in do:
                     restriction_pool = restriction_pool[restriction_pool["type_code"]==do['type']]
                     if(apply_limits):
-                        restriction_pool = restriction_pool.sort_values('inv_occurrence', ascending=False).head(do['limit'])
+                        restriction_pool = restriction_pool.sort_values('presence', ascending=False).head(do['limit'])
                 elif 'limit' in do and 'type' not in do:
                     if(apply_limits):
-                        restriction_pool = restriction_pool.sort_values('inv_occurrence', ascending=False).head()
+                        restriction_pool = restriction_pool.sort_values('presence', ascending=False).head()
                 card_pools.append(restriction_pool)
             elif do['name'] == "Class Choice":
                 if do['id'] == 'faction_1':
@@ -263,27 +264,33 @@ def remove_duplicates_from_deck(deck_to_compare):
     return [deck_to_compare_clean, deck_to_compare_sub]
 
 def get_recommendations_for_deck(deck_to_compare):
-    card_jaccard_score = get_card_jaccard_scores()
+    card_cooc = get_card_cooccurrences()
     all_cards = get_all_cards()
-    inv_cooc_ratio = get_card_investigator_cooccurrences()
+    inv_cooc = get_card_investigator_cooccurrences()
 
     [deck_to_compare_clean, deck_to_compare] = remove_duplicates_from_deck(deck_to_compare)
     # Fetch the jaccard scores for the cards in the deck
-    deck_jaccards = card_jaccard_score[deck_to_compare_clean['slots'][0].keys()]
+
+    idx =pd.IndexSlice
+    c1 = card_cooc.loc[idx[list(deck_to_compare_clean['slots'][0].keys()),:],:].reorder_levels(['card2', 'card1'])
+    c1.index.set_names(['card1', 'card2'], inplace=True)
+    c2 = card_cooc.loc[idx[:,list(deck_to_compare_clean['slots'][0].keys())],:]
+    c = pd.concat([c1, c2])
     # Sum the jaccard scores for each card of the deck
-    recommendations = deck_jaccards.sum(axis=1).sort_values(ascending=False)
+    recommendations = c.loc[~c.index.duplicated()].groupby('card1')['jaccard'].sum()
+
 
     # Get presence in investigator
-    presence_in_investigators = inv_cooc_ratio.loc[deck_to_compare['investigator_name'][0],:].transpose().to_frame('Presence')
-    presence_in_investigators.loc[:,'Presence'] = presence_in_investigators.applymap(lambda x: "{:0.0%}".format(x))
+    presence_in_investigators = inv_cooc.loc[str(deck_to_compare['investigator_code'][0]).zfill(5),:]
+    presence_in_investigators.loc[:,'Presence'] = presence_in_investigators['presence'].apply(lambda x: "{:0.0%}".format(x))
 
     # See possible inclusions (drops cards already in deck)
-    cards_not_in_deck = recommendations.drop(deck_to_compare_clean['slots'][0].keys()).to_frame('Jaccard Score')
-    cards_not_in_deck.loc[:,'Jaccard Score'] = cards_not_in_deck.applymap(lambda x: "{:0.2f}".format(x))
+    cards_not_in_deck = recommendations.drop(deck_to_compare_clean['slots'][0].keys()).to_frame('jaccard')
+    cards_not_in_deck.loc[:,'jaccard'] = cards_not_in_deck.applymap(lambda x: "{:0.2f}".format(x))
     cards_not_in_deck = cards_not_in_deck.join(all_cards[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code','xp']].set_index('code_str'))
 
     # Keeps only assets, events and skills (removes treacheries, enemies, locations, ...)
-    cards_not_in_deck = cards_not_in_deck[cards_not_in_deck['type_code'].isin(['asset','event', 'skill'])][['name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp', 'Jaccard Score']]
+    cards_not_in_deck = cards_not_in_deck[cards_not_in_deck['type_code'].isin(['asset','event', 'skill'])][['name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp', 'jaccard']]
     presence_cards_not_in_deck = presence_in_investigators[~presence_in_investigators.index.isin(deck_to_compare['slots'][0].keys())].join(all_cards[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp']].set_index('code_str'))
     cards_not_in_deck = cards_not_in_deck.join(presence_cards_not_in_deck['Presence'])
 
@@ -315,17 +322,17 @@ def get_recommendations_for_deck(deck_to_compare):
     cards_not_in_deck = filter_cards_in_collection(cards_not_in_deck)
     
     # Gets jaccard score and presence for cards in deck
-    cards_in_deck = recommendations[deck_to_compare_clean['slots'][0].keys()].to_frame('Jaccard Score')
+    cards_in_deck = recommendations[deck_to_compare_clean['slots'][0].keys()].to_frame('jaccard')
 
-    cards_in_deck.loc[:,'Jaccard Score'] = cards_in_deck.applymap(lambda x: "{:0.2f}".format(x))
+    cards_in_deck.loc[:,'jaccard'] = cards_in_deck.applymap(lambda x: "{:0.2f}".format(x))
     presence_cards_in_deck = presence_in_investigators[presence_in_investigators.index.isin(deck_to_compare['slots'][0].keys())].join(all_cards[['code_str','name','pack_code', 'faction_code']].set_index('code_str')).sort_values(by=presence_in_investigators.columns[0],ascending=True)
 
 
     cards_in_deck = pd.DataFrame.from_dict(
         deck_to_compare.loc[:,'slots'][0], orient='index', columns=['count']).join(
-            all_cards[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp', 'myriad']].set_index('code_str')).join(
+            all_cards[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp', 'myriad', 'exceptional']].set_index('code_str')).join(
                 presence_cards_in_deck[['Presence']]).join(
-                    cards_in_deck[['Jaccard Score']])
+                    cards_in_deck[['jaccard']])
 
     # Prepares for view
     cards_in_deck = arkhrec.general_helpers.set_color(cards_in_deck)
@@ -414,6 +421,7 @@ def get_deck_info(deck_to_compare, cards_in_deck):
     deck_info['date_update'] = deck_info['date_update'][0:10]
     cards_in_deck['total_xp'] = cards_in_deck['xp'] * cards_in_deck['count']
     cards_in_deck.loc[cards_in_deck['myriad']==1, 'total_xp'] = cards_in_deck.loc[cards_in_deck['myriad']==1,'xp']
+    cards_in_deck.loc[cards_in_deck['exceptional']==1, 'total_xp'] = 2*cards_in_deck.loc[cards_in_deck['exceptional']==1,'total_xp']
 
     deck_info['xp'] = "{:0.0f}".format(cards_in_deck[cards_in_deck['total_xp']!='-']['total_xp'].astype(int).sum())
     deck_info['total_cards'] = cards_in_deck['count'].sum()

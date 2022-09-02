@@ -50,7 +50,7 @@ def build_investigator_pickle_files():
     # Uses pandas multiindex to facilitate retrieving the data
     # This basically transforms a 2x2 matrix in a "database" style
     tuples = list(zip(card_cooc.index, card_cooc.index))
-    card_cooc_stacked = card_cooc.stack()[tuples].to_frame('Occurrences').reset_index(level=[0])
+    card_cooc_stacked = card_cooc.stack()[tuples].to_frame('occurrences').reset_index(level=[0])
     card_cycles_clean = card_cycles_clean.join(card_cooc_stacked)
 
     # Cleans the XP value for visualization    
@@ -59,10 +59,10 @@ def build_investigator_pickle_files():
     card_cycles_clean.loc[:,'exhib_name'] = card_cycles_clean['name'] + card_cycles_clean['xp_text']
 
     # Calculates the synergy with investigator
-    card_cycles_clean['overall_occurrence_ratio'] = card_cycles_clean['Occurrences'] / num_of_decks
+    card_cycles_clean['card_occurrences_ratio'] = card_cycles_clean['occurrences'] / num_of_decks
 
     inv_cooc_ratio_no_reqs = inv_cooc_ratio.loc[:,card_cycles_clean['restrictions'].isna()].drop('01000', axis=1)   
-    synergy = pd.DataFrame(inv_cooc_ratio_no_reqs.values - card_cycles_clean.loc[inv_cooc_ratio_no_reqs.columns, 'overall_occurrence_ratio'].values, columns=inv_cooc_ratio_no_reqs.columns, index = inv_cooc_ratio_no_reqs.index)
+    synergy = pd.DataFrame(inv_cooc_ratio_no_reqs.values - card_cycles_clean.loc[inv_cooc_ratio_no_reqs.columns, 'card_occurrences_ratio'].values, columns=inv_cooc_ratio_no_reqs.columns, index = inv_cooc_ratio_no_reqs.index)
 
     import numpy as np
     # Gets top 5 synergies
@@ -123,7 +123,6 @@ def build_investigator_pickle_files():
     investigator_summary_export.join(investigators[['faction_code', 'code_str']])
 
     investigator_summary_view = pd.DataFrame(index=investigator_summary_export.index)    
-    print(investigator_summary_export)
 
     for investigator_name, investigator_info in investigator_summary_export.iterrows():
         print(investigator_name,flush=True)
@@ -166,7 +165,6 @@ def build_investigator_pickle_files():
     # print(investigator_summary_view)
     investigator_summary_view.to_pickle(os.path.join(current_app.root_path, 'datafiles',  'investigator_summary_view.pickle'))
 
-    print("Entering for")
 
     for index, deck in all_decks_clean.iterrows():
         # print(deck['name'])

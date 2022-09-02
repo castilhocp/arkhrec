@@ -18,7 +18,7 @@ Search card
 
         <table class="table table-hover" id="cards-table">
             <thead>
-            <tr><th>Card</th><th>Cycle</th><th>Type</th><th>Slot</th><th>Faction</th><th># of decks</th><th></th></tr></thead>
+            <tr><th>Card</th><th>Cycle</th><th>Type</th><th>Slot</th><th>Faction</th><th>Usage in decks <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Counts the number of copies included in decks (i.e. decks with two copies in a deck counts by 2)"></i></th><th></th></tr></thead>
             {% for card_code, card in cards.items() %}
             <tr>   
                 <td>
@@ -38,7 +38,7 @@ Search card
                 <td>{{ card['type_code']|capitalize }}</td>
                 <td>{{ card['slot'] }}</td>
                 <td>{{ card['color']|capitalize }}</td>
-                <td>{{ '%d'|format(card['Occurrences']) }}</td>
+                <td>{{ '%d'|format(card['appearances']) }}</td>
                 <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
             </tr>
             {% endfor %}

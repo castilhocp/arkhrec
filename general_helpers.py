@@ -45,6 +45,7 @@ def convert_text_to_icons(text):
     return text
 
 def set_cycle(row):
+
     return {
         "01": "C",
         "02": "TDL",

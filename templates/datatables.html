@@ -22,7 +22,7 @@
     <td>{{ card['cycle'] }}</td>
     <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>
-    <td>{{ card['Jaccard Score'] }}</td>
+    <td>{{ card['jaccard'] }}</td>
     <td>{{ card['Presence'] }}</td>
     <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
   </tr>
@@ -73,7 +73,7 @@
     <td>{{ card['cycle'] }}</td>
     <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>
-    <td>{{ card['Jaccard Score'] }}</td>
+    <td>{{ card['jaccard'] }}</td>
     <td>{{ card['Presence'] }}</td>
     <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
   </tr>
@@ -133,9 +133,9 @@
     <td>{{ card['cycle'] }}</td>
     <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>
-    <td>{{ '%d'|format(card['Occurrences']) }}</td>
-    <td>{{ '%d'|format(card['Cooccurrences']) }}</td>
-    <td>{{ card['Jaccard Score'] }}</td>
+    <td>{{ '%d'|format(card['occurrences']) }}</td>
+    <td>{{ '%d'|format(card['cooccurrences']) }}</td>
+    <td>{{ card['jaccard'] }}</td>
     <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
   </tr>
   {% endfor %}
@@ -172,12 +172,12 @@
       <span class="icon icon-{{investigator['faction_code']}}" title="{{investigator['faction_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('investigator.view',investigator_id= investigator['code_str'])}}" class="{{ investigator['faction_code'] }}">{{ card_code }}</td></a>
+      <a href="{{url_for('investigator.view',investigator_id= investigator['investigator'])}}" class="{{ investigator['faction_code'] }}">{{ card_code }}</td></a>
     
     <td>{{ investigator['faction_code']|capitalize }}</td>
     <td>{{ investigator['cycle'] }}</td>
-    <td>{{ investigator['number_of_decks'] }}</td>
-    <td>{{ investigator['Coocurrence'] }}</td>
+    <td>{{ '%0.0f'|format(investigator['number_of_decks']) }}</td>
+    <td>{{ investigator['presence'] }}</td>
     <td><a href="https://arkhamdb.com/card/{{ investigator['code_str'] }}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
   </tr>
   {% endfor %}
@@ -233,8 +233,8 @@
     <td>{{ card['cycle'] }}</td>
     <td>{{ card['type_code']|capitalize }}</td>
     <td>{{ card['slot'] }}</td>
-    <td>{{ '%d%%'|format(100*card['inv_occurrence']) }}</td>
-    <td>{{ '%d%%'|format(100*card['overall_occurrence_ratio']) }}</td>
+    <td>{{ '%d%%'|format(100*card['presence']) }}</td>
+    <td>{{ '%d%%'|format(100*card['card_occurrences_ratio']) }}</td>
     <td>{{ '%d%%'|format(100*card['synergy']) }}</td>
     <td><a href="http://arkhamdb.com/card/{{card_code}}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
   </tr>
