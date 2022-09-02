@@ -81,7 +81,7 @@ def read_decks_from_arkhamdb():
                 logging.error(err)
                 exit()
             except ValueError as err:
-                logging.error("Caught Value error on url: {}".format(url+date_to_fetch.strftime('%Y-%m-%d')))
+                logging.error("Caught Value error on url: {}".format(url+dr.strftime('%Y-%m-%d')))
                 logging.error(err)
                 exit()         
             all_decks_list.append(decks)
@@ -421,7 +421,7 @@ def treat_decks(all_decks, card_cycles, duplicates):
 
 def update_cards_repository():
     import os
-    os.system('git clone https://github.com/Kamalisk/arkhamdb-json-data ../arkhamdb-json-data')
+    os.system('git -C ../arkhamdb-json-data pull')
     os.system('cp -a ../arkhamdb-json-data/pack/. datafiles/cards/')
     os.system('cp ../arkhamdb-json-data/cycles.json datafiles/')
     os.system('cp ../arkhamdb-json-data/packs.json datafiles/')
