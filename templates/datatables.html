@@ -94,9 +94,12 @@
           return data;
         }
       },
-    {
-      "targets": 7, "width":"7%", "orderable":false
-    }]
+      {
+        "targets": 7, "width":"7%", "orderable":false
+      }],
+      "drawCallback": function (settings) {
+        enableCardTooltips();
+      }
     });
     </script>
 {%- endmacro %}
@@ -156,7 +159,10 @@
         }
       },{
         "target":8, "width":"7%", "orderable":false
-      }]
+      }],
+      "drawCallback": function (settings) {
+        enableCardTooltips();
+      }
     });
     </script>
 {%- endmacro %}
@@ -198,7 +204,10 @@
         }
       },{
         "target": 5, "width": "7%", "orderable":false
-      }]
+      }],
+      "drawCallback": function (settings) {
+        enableCardTooltips();
+      }
     });
     </script>
 {%- endmacro %}
@@ -256,7 +265,10 @@
         }
       },{
         "target":8, "width":"7%", "orderable":false
-      }]
+      }],
+      "drawCallback": function (settings) {
+        enableCardTooltips();
+      }
     });
     </script>
 {%- endmacro %}

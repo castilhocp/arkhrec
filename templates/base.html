@@ -15,6 +15,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='icons.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='dark-mode.css') }}">
 
+
+
 {% set active_page = active_page|default('Deck') -%}
 {% set navigation_bar = [
   ('card.search', 'card', 'Card'),
@@ -22,6 +24,18 @@
   ('deck.search', 'deck', 'Deck')
 ] -%}
 <body>
+
+  <script type="text/javascript">
+    function enableCardTooltips(){
+      const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+      const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl, {
+                  container: 'body',
+                  html: true
+      }));
+    }
+    
+  </script>
+
 <nav class="navbar navbar-expand-lg">
   <div class="container-fluid">
     <a class="navbar-brand" href="/">ArkhRec</a>
@@ -61,6 +75,10 @@
 </section>
 
 <script type="text/javascript">
+   enableCardTooltips();
+</script>
+
+<script type="text/javascript">
   var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl)
@@ -76,13 +94,7 @@
   })
 </script>
 
-<script type="text/javascript">
-  const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
-  const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl, {
-              container: 'body',
-              html: true
-  }));
-</script>
+
 
 
 <footer class="container" style="font-size:small">

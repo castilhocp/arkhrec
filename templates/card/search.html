@@ -60,7 +60,10 @@ Search card
             },
             {
                 targets: 6, width: "10%", orderable: false
-            }]
+            }],
+            "drawCallback": function (settings) {
+                enableCardTooltips();
+            }
         });
         </script>
     </div>
