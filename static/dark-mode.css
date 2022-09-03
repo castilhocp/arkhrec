@@ -1,0 +1,105 @@
+[data-theme="darkmode"] {
+  background-color: #111 !important;
+  color: #eee;
+}
+
+[data-theme="darkmode"] .bg-light {
+  background-color: #333 !important;
+}
+
+[data-theme="darkmode"] .bg-white {
+  background-color: #000 !important;
+}
+
+[data-theme="darkmode"] .bg-black {
+  background-color: #eee !important;
+}
+
+[data-theme="darkmode"] .nav-link {
+  color: #999 !important;
+}
+
+[data-theme="darkmode"] .navbar-brand, [data-theme="darkmode"] .nav-link.active {
+  color: #eee !important;
+}
+
+[data-theme="darkmode"] .card-header {
+  background-color: #222 !important;
+}
+
+[data-theme="darkmode"] .card-body, [data-theme="darkmode"] .card {
+  background-color: #333 !important;
+}
+
+[data-theme="darkmode"] .highcharts-background, [data-theme="darkmode"] .highcharts-button-symbol, [data-theme="darkmode"] .highcharts-tooltip-box {
+  fill: #333!important;
+}
+
+[data-theme="darkmode"] .highcharts-container text {
+  fill: #eee!important;
+}
+
+[data-theme="darkmode"] .highcharts-legend-box {
+  fill: #333!important;
+}
+
+[data-theme="darkmode"] table {
+  color: #eee !important;
+}
+
+[data-theme="darkmode"] label, [data-theme="darkmode"] select {
+  color: #eee !important;
+}
+
+[data-theme="darkmode"] .paginate_button {
+  color: #eee !important;
+}
+
+[data-theme="darkmode"] .dataTables_wrapper .dataTables_paginate, [data-theme="darkmode"] .dataTables_wrapper .dataTables_paginate .paginate_button.current, [data-theme="darkmode"] .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover, [data-theme="darkmode"] .dataTables_wrapper .dataTables_paginate .paginate_button {
+  color: #eee!important;
+}
+
+[data-theme="darkmode"] .table-hover>tbody>tr:hover>* {
+  color:#fff!important;
+}
+
+[data-theme="darkmode"] .neutral {
+  color: #bbb;
+}
+
+[data-theme="darkmode"] .mystic {
+  color: #958ec5;
+}
+
+[data-theme="darkmode"] .seeker {
+  color: #e2bfa0;
+}
+
+[data-theme="darkmode"].guardian {
+  color: #8db1ce;
+}
+
+[data-theme="darkmode"] .rogue {
+  color: #91d395;
+}
+
+[data-theme="darkmode"] .survivor {
+  color: #db9da0;
+}
+
+[data-theme="darkmode"] .mythos {
+  color: #6e6c6c;
+}
+
+[data-theme="darkmode"] .multi {
+  color: #ffff8f;
+}
+
+[data-theme="darkmode"] .popover {
+  background-color: #666!important;
+}
+
+[data-theme="darkmode"] .popover-arrow::after {
+  border-right-color: #666!important;
+  border-left-color: #666!important;
+}

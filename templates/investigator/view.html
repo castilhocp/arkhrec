@@ -50,7 +50,7 @@
                                         {% if average_deck[card]['faction3_code'] in ['mystic', 'guardian', 'rogue', 'survivor', 'seeker'] %}
                                             <span class="icon icon-{{average_deck[card]['faction3_code']}}" title="{{average_deck[card]['faction3_code']}}"></span>
                                         {% endif %}
-                                        <a href="{{url_for('card.view',card_id= card)}}" class="{{ average_deck[card]['color'] }}">{{average_deck[card]['name']}} {{ '(' + average_deck[card]['xp_text'] + ')' if average_deck[card]['xp_text']!='' else ''}}</a>  
+                                        <a href="{{url_for('card.view',card_id= card)}}" class="{{ average_deck[card]['color'] }}" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="<img src='https://arkhamdb.com/bundles/cards/{{card}}.png'></img>">{{average_deck[card]['name']}} {{ '(' + average_deck[card]['xp_text'] + ')' if average_deck[card]['xp_text']!='' else ''}}</a>  
                                     </li>
                                     {% endfor %}
                             </ul>
@@ -163,7 +163,8 @@
       },
       {
           name: 'Other investigators',
-          data: [{{ deck_statistics['others_assets_percentage'] }}, {{ deck_statistics['others_events_percentage'] }}, {{ deck_statistics['others_skills_percentage'] }}]
+          data: [{{ deck_statistics['others_assets_percentage'] }}, {{ deck_statistics['others_events_percentage'] }}, {{ deck_statistics['others_skills_percentage'] }}],
+          color: '#999'
       }]
   });
 
@@ -219,7 +220,8 @@
       },
       {
           name: 'Other investigators',
-          data: [{{ deck_statistics['others_hand_slot'] }}, {{ deck_statistics['others_arcane_slot'] }}, {{ deck_statistics['others_body_slot'] }}, {{ deck_statistics['others_accessory_slot'] }}, {{ deck_statistics['others_ally_slot'] }}]
+          data: [{{ deck_statistics['others_hand_slot'] }}, {{ deck_statistics['others_arcane_slot'] }}, {{ deck_statistics['others_body_slot'] }}, {{ deck_statistics['others_accessory_slot'] }}, {{ deck_statistics['others_ally_slot'] }}],
+          color: '#999'
 
       }]
   });
@@ -271,7 +273,8 @@
           color: getComputedStyle(document.querySelector('.{{investigator_info[investigator_id]['faction_code']}}')).color
       }, {
           name: 'Other investigators',
-          data: [{{ deck_statistics['others_mean_cost'] }}]
+          data: [{{ deck_statistics['others_mean_cost'] }}],
+          color: '#999'
 
       }]
   });
@@ -328,7 +331,8 @@
       }, 
       {
           name: 'Other investigators',
-          data: [{{ deck_statistics['others_skill_willpower'] }}, {{ deck_statistics['others_skill_intellect'] }}, {{ deck_statistics['others_skill_combat'] }}, {{ deck_statistics['others_skill_agility'] }}, {{ deck_statistics['others_skill_wild'] }}]
+          data: [{{ deck_statistics['others_skill_willpower'] }}, {{ deck_statistics['others_skill_intellect'] }}, {{ deck_statistics['others_skill_combat'] }}, {{ deck_statistics['others_skill_agility'] }}, {{ deck_statistics['others_skill_wild'] }}],
+          color: '#999'
 
       }]
   });

@@ -19,7 +19,7 @@
 }
 
 .neutral {
-    color: #606060;
+    color: #666;
 }
 
 .mythos {
@@ -76,6 +76,20 @@ h1 {
     font-weight: 200;
 }
 
+.card-header {
+    background-color: #eee!important;
+    border-color: #aaa;
+}
+  
+.card-body, .card {
+    background-color: #fff!important;
+    border-color: #aaa;
+}
+
+.nav-link .active {
+    color: var(--bs-navbar-active-color)!important;
+}
+
 .highcharts-figure,
 .highcharts-data-table table {
     min-width: 360px;
@@ -118,3 +132,11 @@ h1 {
 .highcharts-data-table tr:hover {
     background: #f1f7ff;
 }
+
+.popover {
+    width:fit-content;
+    height:fit-content;
+    max-width:none;
+}
+
+  

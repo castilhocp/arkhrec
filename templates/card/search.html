@@ -10,7 +10,7 @@ Search card
 {% endblock %}
 
 {% block content %}
-<div class="container-xl bg-white mx-auto mt-5 p-3">
+<div class="container-xl mx-auto mt-5 p-3 bg-light">
     <div class="row m-2">
         <h3>Card selection</h3>
         <p>Select a card to see cards commonly used together and popular investigators for it</p>
@@ -32,7 +32,7 @@ Search card
                 <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
                 {% endif %}
             
-                <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} {{ '(' + card['xp_text'] + ')' if card['xp_text']!='' else ''}}</td></a>
+                <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="<img src='https://arkhamdb.com/bundles/cards/{{card_code}}.png'></img>">{{ card['name'] }} {{ '(' + card['xp_text'] + ')' if card['xp_text']!='' else ''}}</td></a>
             
                 <td>{{ card['cycle'] }}</td>
                 <td>{{ card['type_code']|capitalize }}</td>

@@ -9,13 +9,11 @@
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="https://kit.fontawesome.com/4030f949da.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.12.1/r-2.3.0/datatables.min.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.12.1/r-2.3.0/datatables.min.js"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='icons.css') }}">
-
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.12.1/r-2.3.0/datatables.min.css"/>
- 
-<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.12.1/r-2.3.0/datatables.min.js"></script>
-
+<link rel="stylesheet" href="{{ url_for('static', filename='dark-mode.css') }}">
 
 {% set active_page = active_page|default('Deck') -%}
 {% set navigation_bar = [
@@ -23,7 +21,7 @@
   ('investigator.search', 'investigator', 'Investigator'),
   ('deck.search', 'deck', 'Deck')
 ] -%}
-
+<body>
 <nav class="navbar navbar-expand-lg">
   <div class="container-fluid">
     <a class="navbar-brand" href="/">ArkhRec</a>
@@ -37,7 +35,16 @@
           <a class="nav-link {% if active_page==id %} active{% endif %}" aria-current="page" href="{{url_for(href)}}">{{caption}}</a>
         </li>
         {% endfor %}
-      </ul>
+        </ul>
+        <ul class="navbar-nav">
+          <li>
+            <div class="form-check form-switch">
+              <input type="checkbox" class="form-check-input" id="darkSwitch" />
+              <label class="custom-control-label" for="darkSwitch">Dark Mode</label>
+            </div>
+            <script src="{{ url_for('static', filename='dark-mode-switch.min.js')}}"></script>
+          </li>
+        </ul>  
     </div>
   </div>
 </nav>
@@ -69,8 +76,18 @@
   })
 </script>
 
+<script type="text/javascript">
+  const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+  const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl, {
+              container: 'body',
+              html: true
+  }));
+</script>
+
+
 <footer class="container" style="font-size:small">
   <br><hr>
   The information presented on this site about Arkham Horror: The Card Game, both literal and graphical, is copyrighted by Fantasy Flight Games. This website is not produced, endorsed, supported, or affiliated with Fantasy Flight Games.
 </footer>
+</body>
 

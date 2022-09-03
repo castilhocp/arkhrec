@@ -16,7 +16,7 @@
       <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }}</td></a>
+      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="<img src='https://arkhamdb.com/bundles/cards/{{card_code}}.png'></img>">{{ card['name'] }}</td></a>
     
     <td>{{ card['xp_text'] if card['xp_text']!='' else '0'}}</td>
     <td>{{ card['cycle'] }}</td>
@@ -67,7 +67,7 @@
       <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }}</td></a>
+      <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}"  data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="<img src='https://arkhamdb.com/bundles/cards/{{card_code}}.png'></img>">{{ card['name'] }}</td></a>
     
     <td>{{ card['xp_text'] if card['xp_text']!='' else '0'}}</td>
     <td>{{ card['cycle'] }}</td>
@@ -127,7 +127,7 @@
       <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }} </td></a>
+      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}"  data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="<img src='https://arkhamdb.com/bundles/cards/{{card_code}}.png'></img>">{{ card['name'] }} </td></a>
     
     <td> {{ card['xp_text'] if card['xp_text']!='' else '0'}}</td>
     <td>{{ card['cycle'] }}</td>
@@ -172,7 +172,7 @@
       <span class="icon icon-{{investigator['faction_code']}}" title="{{investigator['faction_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('investigator.view',investigator_id= investigator['investigator'])}}" class="{{ investigator['faction_code'] }}">{{ card_code }}</td></a>
+      <a href="{{url_for('investigator.view',investigator_id= investigator['investigator'])}}" class="{{ investigator['faction_code'] }}" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="<img src='https://arkhamdb.com/bundles/cards/{{investigator['investigator']}}.png'></img>">{{ card_code }}</td></a>
     
     <td>{{ investigator['faction_code']|capitalize }}</td>
     <td>{{ investigator['cycle'] }}</td>
@@ -227,7 +227,7 @@
       <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}">{{ card['name'] }}</td></a>
+      <a href="{{url_for('card.view', card_id=card_code)}}" class="{{ card['color'] }}" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="<img src='https://arkhamdb.com/bundles/cards/{{card_code}}.png'></img>">{{ card['name'] }}</td></a>
     
     <td>{{ card['xp_text'] if card['xp_text']!='' else '0'}}</td>
     <td>{{ card['cycle'] }}</td>
@@ -260,4 +260,6 @@
     });
     </script>
 {%- endmacro %}
+
+
 
