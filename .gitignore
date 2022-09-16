@@ -2,3 +2,4 @@ __pycache__/
 backlog
 datafiles/
 backup/
+templates/gtag.html
