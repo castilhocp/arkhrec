@@ -31,7 +31,6 @@ def view(card_id):
 
     # Gets presence, occurrence for all investigators
     usage_by_investigators = cd.get_usage_by_investigators(card_id)
-    print(usage_by_investigators)
 
     num_of_decks = len(cd.get_all_decks())
     num_of_cards = len(cd.get_analysed_card_frequencies())
