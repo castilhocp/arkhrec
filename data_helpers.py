@@ -8,7 +8,7 @@ import arkhrec.general_helpers
 
 gCycles=dict()
 
-PACKS_WITHOUT_PLAYER_CARDS = ['tsk', 'promotional', 'parallel', 'side_stories']
+PACKS_WITHOUT_PLAYER_CARDS = ['promotional', 'parallel', 'side_stories']
 
 def get_all_cards():
     if 'all_cards' not in g:
