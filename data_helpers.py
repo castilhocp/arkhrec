@@ -135,6 +135,7 @@ def get_similarities_with_card(card_id):
 
     analysed_cards_with_similarities = analysed_cards.join(c)
     analysed_cards_with_similarities = analysed_cards_with_similarities[~analysed_cards_with_similarities.index.duplicated()]
+    analysed_cards_with_similarities = analysed_cards_with_similarities.dropna()
     analysed_cards_with_similarities.loc[:,'jaccard'] = analysed_cards_with_similarities['jaccard'].apply(lambda x: "{:0.0%}".format(x))   
     analysed_cards_with_similarities.loc[:,'cost_view'] = analysed_cards_with_similarities['cost'].apply(lambda x: x if (x=='' or x=='X' or x=='x' or x=='-') else "{:0.0f}".format(float(x)))
     analysed_cards_with_similarities = analysed_cards_with_similarities.dropna()
