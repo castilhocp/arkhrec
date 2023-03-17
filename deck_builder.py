@@ -282,7 +282,7 @@ def get_recommendations_for_deck(deck_to_compare):
 
     # Get presence in investigator
     presence_in_investigators = inv_cooc.loc[str(deck_to_compare['investigator_code'][0]).zfill(5),:]
-    presence_in_investigators.loc[:,'Presence'] = presence_in_investigators['presence'].apply(lambda x: "{:0.0%}".format(x))
+    presence_in_investigators.loc[:,'Presence'] = presence_in_investigators['presence'].dropna().apply(lambda x: "{:0.0%}".format(x))
 
     # See possible inclusions (drops cards already in deck)
     cards_not_in_deck = recommendations.drop(deck_to_compare_clean['slots'][0].keys()).to_frame('jaccard')
@@ -293,6 +293,7 @@ def get_recommendations_for_deck(deck_to_compare):
     cards_not_in_deck = cards_not_in_deck[cards_not_in_deck['type_code'].isin(['asset','event', 'skill'])][['name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp', 'jaccard']]
     presence_cards_not_in_deck = presence_in_investigators[~presence_in_investigators.index.isin(deck_to_compare['slots'][0].keys())].join(all_cards[['code_str','name', 'pack_code', 'faction_code', 'faction2_code', 'faction3_code','slot','type_code', 'xp']].set_index('code_str'))
     cards_not_in_deck = cards_not_in_deck.join(presence_cards_not_in_deck['Presence'])
+
 
     # Removes cards not allowed for deck
     # Gets deck options (if applicable, e.g. off-class faction choice)
@@ -320,6 +321,7 @@ def get_recommendations_for_deck(deck_to_compare):
     cards_not_in_deck = cards_not_in_deck.fillna("-")
     cards_not_in_deck['cycle'] = cards_not_in_deck.apply(arkhrec.general_helpers.set_cycle, axis=1)
     cards_not_in_deck = filter_cards_in_collection(cards_not_in_deck)
+    
     
     # Gets jaccard score and presence for cards in deck
     cards_in_deck = recommendations[deck_to_compare_clean['slots'][0].keys()].to_frame('jaccard')
@@ -423,7 +425,7 @@ def get_deck_info(deck_to_compare, cards_in_deck):
     cards_in_deck.loc[cards_in_deck['myriad']==1, 'total_xp'] = cards_in_deck.loc[cards_in_deck['myriad']==1,'xp']
     cards_in_deck.loc[cards_in_deck['exceptional']==1, 'total_xp'] = 2*cards_in_deck.loc[cards_in_deck['exceptional']==1,'total_xp']
 
-    deck_info['xp'] = "{:0.0f}".format(cards_in_deck[cards_in_deck['total_xp']!='-']['total_xp'].astype(int).sum())
+    deck_info['xp'] = "{:0.0f}".format(cards_in_deck[(cards_in_deck['total_xp']!='-') & (cards_in_deck['total_xp']!='----') & (cards_in_deck['total_xp']!='')]['total_xp'].astype(int).sum())
     deck_info['total_cards'] = cards_in_deck['count'].sum()
     deck_info['inv_deck_count'] = all_decks[all_decks['investigator_name']==deck_to_compare['investigator_name'][0]].count()[0]
 
