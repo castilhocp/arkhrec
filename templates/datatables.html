@@ -170,7 +170,7 @@
 {% macro generate_inv_card_table(investigators) -%}
 <table class="table table-hover" id="inv-card-cooc-table">
   <thead>
-  <tr><th>Investigator</th><th>Faction</th><th>Cycle</th><th>Number of decks <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Number of decks this investigator appear."></i></th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
+  <tr><th>Investigator</th><th>Faction</th><th>Cycle</th><th># of decks w/ card <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="Number of decks from this investigator with this card."></i></th><th>Presence <i class="fa-solid fa-circle-info" data-bs-toggle="tooltip" data-bs-placement="left" title="The percentage of decks from this investigator that have this card."></i></th><th></th></tr></thead>
 {% for card_code, investigator in investigators.items() %}
 <tr>   
       <td>
@@ -182,7 +182,7 @@
     
     <td>{{ investigator['faction_code']|capitalize }}</td>
     <td>{{ investigator['cycle'] }}</td>
-    <td>{{ '%0.0f'|format(investigator['number_of_decks']) }}</td>
+    <td>{{ '%0.0f'|format(investigator['inv_cooccurrences']) }}</td>
     <td>{{ investigator['presence'] }}</td>
     <td><a href="https://arkhamdb.com/card/{{ investigator['code_str'] }}" rel="noopener noreferrer" target="_blank" class="fst-italic" style="font-size:x-small; color:grey;">View on ArkhamDB</a></td>
   </tr>
