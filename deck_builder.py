@@ -248,6 +248,7 @@ def cards_valid_for_investigator(card_cycles_pool, deck_options, single_faction_
 
     card_pool = card_pool.loc[card_pool.astype(str).drop_duplicates().index]
     card_pool.loc[:,'deck_limit'] = pd.to_numeric(card_pool['deck_limit'], errors='coerce')
+    card_pool = card_pool.drop_duplicates(subset=['code'])
     
     return card_pool
 
