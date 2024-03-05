@@ -16,7 +16,7 @@ def get_all_cards():
         all_cards.loc[:,'unique_code'] = all_cards.loc[:, 'code_str']
         all_cards.loc[~all_cards['duplicate_of'].isna(), 'unique_code'] = all_cards.loc[~all_cards['duplicate_of'].isna(), 'duplicate_of'].astype(int).astype(str).apply(str.zfill, args=[5])
         g.all_cards=all_cards
-           
+
     return g.all_cards
 
 def get_all_decks():
@@ -50,7 +50,7 @@ def get_collection():
         return session['card_collection']
 
     card_collection = dict()
-    # print(gCycles)
+    
     for cycle in gCycles:
         
 
@@ -68,12 +68,13 @@ def get_all_investigators(index='code_str'):
 
     all_cards = get_all_cards()
     all_decks = get_all_decks()
+
     all_investigators = all_cards[all_cards['type_code']=="investigator"]
 
     # There are investigators with multiple codes (e.g. parallel versions, book versions, etc.)
     # Gets the minimum code (that's the "cycle" version)
     # Converts to numeric to find the minimum value
-    all_investigators.loc[:,'code'] = pd.to_numeric(all_investigators['code'])
+    all_investigators.loc[:,'code'] = pd.to_numeric(all_investigators['code'], errors='coerce')
     investigator_unique_codes = all_investigators.groupby('name')['code'].min()
     all_cards.loc[:,'code'] = pd.to_numeric(all_cards['code'], errors='coerce')
     investigators = all_cards[all_cards['code'].isin(investigator_unique_codes.values)].set_index('name')

@@ -26,7 +26,7 @@ def search():
 def view(card_id):    
 
     # Gets occurrence, cooccurrence and cooccurrence ratio for cards in collection
-    card_similarities = cd.get_similarities_with_card(card_id)
+    card_similarities = cd.get_similarities_with_card(card_id) 
     filtered_card_similarities = cd.filter_cards_in_collection(card_similarities, [card_id])
 
     # Gets presence, occurrence for all investigators
