@@ -16,7 +16,7 @@
       <span class="icon icon-{{card['faction3_code']}}" title="{{card['faction3_code']}}"></span>
       {% endif %}
   
-      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="<img src='https://arkhamdb.com/bundles/cards/{{card_code}}.png'></img>">{{ card['name'] }}</td></a>
+      <a href="{{url_for('card.view',card_id=card_code)}}" class="{{ card['color'] }}" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="<img src='https://arkhamdb.com/bundles/cards/{{card_code}}.png' style='max-width:100%'></img>">{{ card['name'] }}</td></a>
     
     <td>{{ card['xp_text'] if card['xp_text']!='' else '0'}}</td>
     <td>{{ card['cycle'] }}</td>
