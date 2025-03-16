@@ -3,6 +3,7 @@ from flask import current_app
 import os
 import pandas as pd
 import numpy as np
+import pdb
 
 import arkhrec.general_helpers
 
@@ -96,8 +97,9 @@ def get_all_investigators(index='code_str'):
 
     #removes duplicates (Hank Samson)
     investigators = investigators[investigators['code']!='-']
-    
-    investigators = investigators.reset_index().set_index(index)
+    investigators = investigators.reset_index()
+    investigators.rename(columns={'index':'name'}, inplace=True)
+    investigators.set_index(index)
 
     g.all_investigators = investigators
 
