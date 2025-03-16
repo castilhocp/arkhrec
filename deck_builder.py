@@ -117,7 +117,8 @@ def build_average_deck(investigator, analysed_cards, deck_statistics):
     events = events_card_pool[events_card_pool['cumsum_deck_limit']<=events_to_include]
     skills = skills_card_pool[skills_card_pool['cumsum_deck_limit']<=skills_to_include]
 
-    average_deck = skills.append(assets.append(events))
+    #average_deck = skills.append(assets.append(events))
+    average_deck = pd.concat([skills, assets, events])
     average_deck.loc[:,'amount'] = average_deck['deck_limit']
 
     # check deck size
@@ -136,7 +137,7 @@ def build_average_deck(investigator, analysed_cards, deck_statistics):
             inclusions_to_deck = new_card_pool[new_card_pool['cumsum_deck_limit']<(final_deck_size - deck_size)]
             inclusions_to_deck.loc[:,'amount'] = inclusions_to_deck['deck_limit']
 
-        average_deck = average_deck.append(inclusions_to_deck)  
+        average_deck = pd.concat([average_deck,inclusions_to_deck])  
 
         final_deck_size = average_deck['amount'].sum()
 
@@ -159,14 +160,14 @@ def build_average_deck(investigator, analysed_cards, deck_statistics):
                 xp_cards = card_pool_xp.head(1)
                 card_pool_xp = card_pool_xp.drop(xp_cards.index)
                 xp_cards.loc[:,'amount'] = math.floor(xp_to_include / xp_cards['xp'])
-                xp_cards_to_include = xp_cards_to_include.append(xp_cards)
+                xp_cards_to_include = pd.concat([xp_cards_to_include,xp_cards])
             else:
                 
                 xp_cards = card_pool_xp[card_pool_xp['cumsum_xp']<xp_to_include]
                 
                 card_pool_xp = card_pool_xp.drop(xp_cards.index)
                 xp_cards.loc[:,'amount'] = xp_cards['deck_limit']
-                xp_cards_to_include = xp_cards_to_include.append(xp_cards)
+                xp_cards_to_include = pd.concat([xp_cards_to_include,xp_cards])
                 
             xp_cards_to_include.loc[:,'total_xp'] = xp_cards_to_include['amount'] * xp_cards_to_include['xp']
             included_xp = xp_cards_to_include['total_xp'].sum()
@@ -188,7 +189,7 @@ def build_average_deck(investigator, analysed_cards, deck_statistics):
                 number_of_cards_to_exclude = average_deck['amount'].sum()+number_of_cards_to_include-deck_size
                 if average_deck['amount'].sum() <= deck_size - number_of_cards_to_include:
                     break
-            average_deck = average_deck.append(xp_cards_to_include)
+            average_deck = pd.concat([average_deck,xp_cards_to_include])
 
     average_deck.sort_values(['type_code','presence'])
     average_deck['color'] = average_deck['faction_code']

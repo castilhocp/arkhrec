@@ -57,6 +57,7 @@ def set_cycle(row):
         "08": "EotE",
         "09": "TSK",
         "10": "FHV",
+        "11": "TDC",
         "50": "RNotZ",
         "51": "RtDL",
         "52": "RtPtC",

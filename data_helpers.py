@@ -93,6 +93,10 @@ def get_all_investigators(index='code_str'):
     # removes investigators with no decks (currently, only the ones from the TCU prologue)
     investigators = investigators.fillna("-")
     investigators = investigators[investigators['number_of_decks']!='-']
+
+    #removes duplicates (Hank Samson)
+    investigators = investigators[investigators['code']!='-']
+    
     investigators = investigators.reset_index().set_index(index)
 
     g.all_investigators = investigators
