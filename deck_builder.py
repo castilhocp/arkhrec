@@ -44,21 +44,24 @@ def build_average_deck(investigator, analysed_cards, deck_statistics):
 
     for m in choice_decks.meta:
         if m:
-            m = ast.literal_eval(m)
-            if 'deck_size_selected' in m:
-                deck_size_selected[m['deck_size_selected']] = deck_size_selected[m['deck_size_selected']] + 1/len(choice_decks.meta)
-            if 'faction_selected' in m:
-                faction_selected[m['faction_selected']] = faction_selected[m['faction_selected']] + 1/len(choice_decks.meta)
-            if 'option_selected' in m:
-                option_selected[m['option_selected']] = option_selected[m['option_selected']] + 1/len(choice_decks.meta)
-            if 'alternate_front' in m:
-                alternate_front[m['alternate_front']] = alternate_front[m['alternate_front']] + 1/len(choice_decks.meta)
-            if 'alternate_back' in m:
-                alternate_back[m['alternate_back']] = alternate_back[m['alternate_back']] + 1/len(choice_decks.meta)
-            if 'faction_1' in m:
-                two_factions_selected[m['faction_1']] = two_factions_selected[m['faction_1']] + 1/len(choice_decks.meta)
-            if 'faction_2' in m:
-                two_factions_selected[m['faction_2']] = two_factions_selected[m['faction_2']] + 1/len(choice_decks.meta)
+            try:
+                m = ast.literal_eval(m)
+                if 'deck_size_selected' in m:
+                    deck_size_selected[m['deck_size_selected']] = deck_size_selected[m['deck_size_selected']] + 1/len(choice_decks.meta)
+                if 'faction_selected' in m:
+                    faction_selected[m['faction_selected']] = faction_selected[m['faction_selected']] + 1/len(choice_decks.meta)
+                if 'option_selected' in m:
+                    option_selected[m['option_selected']] = option_selected[m['option_selected']] + 1/len(choice_decks.meta)
+                if 'alternate_front' in m:
+                    alternate_front[m['alternate_front']] = alternate_front[m['alternate_front']] + 1/len(choice_decks.meta)
+                if 'alternate_back' in m:
+                    alternate_back[m['alternate_back']] = alternate_back[m['alternate_back']] + 1/len(choice_decks.meta)
+                if 'faction_1' in m:
+                    two_factions_selected[m['faction_1']] = two_factions_selected[m['faction_1']] + 1/len(choice_decks.meta)
+                if 'faction_2' in m:
+                    two_factions_selected[m['faction_2']] = two_factions_selected[m['faction_2']] + 1/len(choice_decks.meta)
+            except ValueError as ex:
+                pass
 
     deck_size_selected['none'] = 1-sum(deck_size_selected.values())
     two_factions_selected['none']=2-sum(two_factions_selected.values())

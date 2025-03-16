@@ -99,7 +99,8 @@ def get_all_investigators(index='code_str'):
     investigators = investigators[investigators['code']!='-']
     investigators = investigators.reset_index()
     investigators.rename(columns={'index':'name'}, inplace=True)
-    investigators.set_index(index)
+
+    investigators = investigators.set_index(index)
 
     g.all_investigators = investigators
 
@@ -161,13 +162,13 @@ def filter_cards_in_collection(cards_to_filter, other_cards_to_include=[]):
 
 def get_usage_by_investigators(card_id):
     inv_cooc = get_card_investigator_cooccurrences()
-    investigators = get_all_investigators('name')
+    investigators = get_all_investigators()
 
     usage_by_investigators = inv_cooc.xs(card_id,level=1)
     usage_by_investigators = usage_by_investigators.rename(columns={'cooccurrence':'Coocurrence', 'occurrences_investigator': 'number_of_decks'})
     usage_by_investigators.loc[:,'presence'] = usage_by_investigators['presence'].apply(lambda x: "{:0.0%}".format(x))   
     
-    usage_by_investigators = usage_by_investigators.join(investigators.reset_index().set_index('code_str')[['name', 'faction_code', 'faction2_code']])
+    usage_by_investigators = usage_by_investigators.join(investigators[['name', 'faction_code', 'faction2_code']])
     usage_by_investigators = arkhrec.general_helpers.set_color(usage_by_investigators)
 
     usage_by_investigators = usage_by_investigators.reset_index().set_index('investigator')
